@@ -1,12 +1,12 @@
 BUILD_DIR = build
 SRC_DIR = src
 
-CC = gcc
 CFLAGS = -Wall
 CFLAGS_DEBUG = -g -DDEBUG
+CC = gcc $(CFLAGS)
 
 .PHONY: all
-all: $(BUILD_DIR) $(BUILD_DIR)/tesh
+all: $(BUILD_DIR) $(BUILD_DIR)/tesh $(BUILD_DIR)/test_tokenizer
 
 .PHONY: debug
 debug: CFLAGS += $(CFLAGS_DEBUG)
@@ -15,6 +15,11 @@ debug: all
 .PHONY: clean
 clean:
 	rm -rvf $(BUILD_DIR)
+
+$(BUILD_DIR)/tesh: $(BUILD_DIR)/tokenizer.o
+$(BUILD_DIR)/tokenizer: $(SRC_DIR)/tokenizer.h
+$(BUILD_DIR)/test_tokenizer: $(BUILD_DIR)/tokenizer.o $(BUILD_DIR)/test.o
+$(BUILD_DIR)/test: $(SRC_DIR)/test.h
 
 $(BUILD_DIR)/%: $(BUILD_DIR)/%.o
 	$(CC) -o $@ $(filter %.o, $^) $(LD_FLAGS)
