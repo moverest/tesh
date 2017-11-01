@@ -6,7 +6,7 @@ CFLAGS_DEBUG = -g -DDEBUG
 CC = gcc $(CFLAGS)
 
 .PHONY: all
-all: $(BUILD_DIR) $(BUILD_DIR)/tesh $(BUILD_DIR)/test_tokenizer
+all: $(BUILD_DIR) $(BUILD_DIR)/tesh $(BUILD_DIR)/test_tokenizer tesh
 
 .PHONY: debug
 debug: CFLAGS += $(CFLAGS_DEBUG)
@@ -14,12 +14,15 @@ debug: all
 
 .PHONY: clean
 clean:
-	rm -rvf $(BUILD_DIR)
+	rm -rvf $(BUILD_DIR) tesh
 
 $(BUILD_DIR)/tesh: $(BUILD_DIR)/tokenizer.o
 $(BUILD_DIR)/tokenizer: $(SRC_DIR)/tokenizer.h
 $(BUILD_DIR)/test_tokenizer: $(BUILD_DIR)/tokenizer.o $(BUILD_DIR)/test.o
 $(BUILD_DIR)/test: $(SRC_DIR)/test.h
+
+tesh: run
+	cp run tesh
 
 $(BUILD_DIR)/%: $(BUILD_DIR)/%.o
 	$(CC) -o $@ $(filter %.o, $^) $(LD_FLAGS)
