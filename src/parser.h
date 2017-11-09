@@ -1,0 +1,41 @@
+#ifndef PARSER_H_IMPORTED
+#define PARSER_H_IMPORTED
+
+#include <stdbool.h>
+//#include <stdlib.h>
+#include <unistd.h>
+#include <sys/types.h>
+
+typedef struct {
+    char **argv;
+} command_t;
+
+typedef enum {
+    GO_ON_IF_SUCCESS,
+    GO_ON_IF_FAILURE,
+    GO_ON_NEVER
+} go_on_condition_t;
+
+typedef struct {
+    command_t         *cmds;
+    size_t            num_commands;
+    go_on_condition_t go_on_condition;
+    char              *redirect_in_file;
+    char              *redirect_out_file;
+    bool              redirect_append;
+} statement_t;
+
+typedef struct {
+    statement_t *statements;
+    size_t      num_statements;
+    bool        bg;
+} statements_t;
+
+typedef struct {
+    int fd[2];
+} pipe_t;
+
+int exec_statements(statements_t *t);
+
+
+#endif

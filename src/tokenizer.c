@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+// Lexer
+
 tokenizer_t *new_tokenizer(char *buf) {
     tokenizer_t *tokenizer = malloc(sizeof(tokenizer_t));
 
