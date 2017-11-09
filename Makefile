@@ -6,7 +6,10 @@ CFLAGS_DEBUG = -g -DDEBUG
 CC = gcc $(CFLAGS)
 
 .PHONY: all
-all: $(BUILD_DIR) $(BUILD_DIR)/tesh $(BUILD_DIR)/test_tokenizer tesh
+all: $(BUILD_DIR) $(BUILD_DIR)/tesh tesh
+
+.PHONY: tests
+tests: $(BUILD_DIR) $(BUILD_DIR)/test_tokenizer
 
 .PHONY: debug
 debug: CFLAGS += $(CFLAGS_DEBUG)
