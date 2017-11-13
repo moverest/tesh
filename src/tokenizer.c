@@ -36,9 +36,10 @@ token_t *tokenizer_next(tokenizer_t *tokenizer) {
 
 
     switch (tokenizer->buf[tokenizer->pos]) {
-    case '\0':
     case ';':
-        incr  = 1;
+        incr = 1;
+
+    case '\0':
         token = new_token(TOKEN_END, NULL, 0);
         break;
 
