@@ -32,6 +32,6 @@ token_t *tokenizer_next(tokenizer_t *tokenizer);
 
 token_t *new_token(token_type_t type, char *str, size_t len);
 void token_free(token_t *token);
-char* token_extract(token_t *token);
+char *token_extract(token_t *token);
 
 #endif

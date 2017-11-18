@@ -26,9 +26,9 @@ typedef struct {
 } statement_t;
 
 typedef struct {
-    statement_t* statements;
-    size_t       num_statements;
-    bool         bg;
+    statement_t *statements;
+    size_t      num_statements;
+    bool        bg;
 } compound_statement_t;
 
 typedef struct {
@@ -36,22 +36,22 @@ typedef struct {
 } pipe_t;
 
 typedef struct {
-  tokenizer_t* tokenizer;
-  token_t* current_token;
+    tokenizer_t *tokenizer;
+    token_t     *current_token;
 } parser_t;
 
 
-command_t* new_commande();
-command_t* parser_cmd(parser_t* parser);
-void print_command(command_t* cmd);
+command_t *new_commande();
+command_t *parser_cmd(parser_t *parser);
+void print_command(command_t *cmd);
 
-statement_t* new_statement();
-statement_t* parser_statement(parser_t* parser);
-void print_statement(statement_t* statement);
+statement_t *new_statement();
+statement_t *parser_statement(parser_t *parser);
+void print_statement(statement_t *statement);
 
-compound_statement_t* new_compound();
-compound_statement_t* parser_compound(parser_t* parser);
-void print_compound(compound_statement_t* statements);
+compound_statement_t *new_compound();
+compound_statement_t *parser_compound(parser_t *parser);
+void print_compound(compound_statement_t *statements);
 int exec_compound(compound_statement_t *t);
 
 #endif
