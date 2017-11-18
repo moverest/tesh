@@ -24,7 +24,7 @@ $(BUILD_DIR)/tokenizer.o: $(SRC_DIR)/tokenizer.h
 $(BUILD_DIR)/parser.o: $(SRC_DIR)/parser.h
 $(BUILD_DIR)/vector.o: $(SRC_DIR)/vector.h
 $(BUILD_DIR)/test_tokenizer: $(BUILD_DIR)/tokenizer.o $(BUILD_DIR)/test.o
-$(BUILD_DIR)/test_parser: $(BUILD_DIR)/parser.o $(BUILD_DIR)/test.o
+$(BUILD_DIR)/test_parser: $(foreach f, parser.o test.o vector.o tokenizer.o, $(BUILD_DIR)/$f)
 $(BUILD_DIR)/test_vector: $(BUILD_DIR)/vector.o $(BUILD_DIR)/test.o
 $(BUILD_DIR)/test: $(SRC_DIR)/test.h
 

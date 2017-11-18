@@ -11,13 +11,13 @@ static void test_parser_exec(test_t *t) {
             (statement_t){
                 .cmds              = (command_t[]){
                     {
-                        .argv      = (char *[]){"echo","-e",              "banana\n coco\n bite\n ssh", NULL }
+                        .argv      = (char *[]){"echo","-e", "banana\n coco\n foo\n ssh", NULL }
                     },
                     {
-                        .argv      = (char *[]){"echo","coucou \n",       NULL }
+                        .argv      = (char *[]){"echo","coucou \n", NULL }
                     },
                     {
-                        .argv      = (char *[]){"grep","banana",          NULL }
+                        .argv      = (char *[]){"grep","banana", NULL }
                     }
                 },
                 .num_commands      = 3,
@@ -53,15 +53,25 @@ static void test_parser_exec(test_t *t) {
         .bg             = false
     };
 
+    print_statements(&test_statements);
+
     if (exec_statements(&test_statements) != 0) {
         test_fail(t);
     }
+}
+
+static void test_parse_statement(test_t *t){
+  char    *test_buf          = "echo 1 && echo 2 ;";
+  tokenizer_t *tokenizer = new_tokenizer(test_buf);
+  statements_t* statements = parse_statement(tokenizer);
+  print_statements(statements);
 }
 
 
 int main() {
     test_function_t tests[] = {
         TEST_FUNCTION(test_parser_exec),
+        TEST_FUNCTION(test_parse_statement)
     };
 
     return test_run(tests, ARRAY_LEN(tests));

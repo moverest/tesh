@@ -100,7 +100,7 @@ token_t *new_token(token_type_t type, char *str, size_t len) {
         return NULL;
     }
     token->type = type;
-
+    token->str = NULL;
     if (str != NULL) {
         token->str = malloc(sizeof(char) * (len + 1));
         if (token->str == NULL) {
@@ -116,6 +116,13 @@ token_t *new_token(token_type_t type, char *str, size_t len) {
     return token;
 }
 
+
+
+char* token_extract(token_t *token) {
+    char* str = token->str ;
+    free(token);
+    return str;
+}
 
 void token_free(token_t *token) {
     if (token->str != NULL) {

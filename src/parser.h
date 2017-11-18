@@ -2,9 +2,9 @@
 #define PARSER_H_IMPORTED
 
 #include <stdbool.h>
-//#include <stdlib.h>
 #include <unistd.h>
 #include <sys/types.h>
+#include "tokenizer.h"
 
 typedef struct {
     char **argv;
@@ -35,7 +35,8 @@ typedef struct {
     int fd[2];
 } pipe_t;
 
+statements_t* parse_statement(tokenizer_t* tokens);
 int exec_statements(statements_t *t);
-
+statement_t* new_statement();
 
 #endif
