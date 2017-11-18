@@ -12,7 +12,8 @@ typedef enum {
     TOKEN_OR,
     TOKEN_PIPE,
     TOKEN_END,
-    TOKEN_BG
+    TOKEN_BG,
+    TOKEN_EOF
 } token_type_t;
 
 typedef struct {

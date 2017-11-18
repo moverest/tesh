@@ -32,22 +32,29 @@ void print_statement(statement_t* statement){
     puts("");
 }
 
-void print_statements(compound_statement_t* statements){
+void print_compound(compound_statement_t* statements){
   printf("Statement : \n");
+  printf("num_statements : %ld\n", statements->num_statements);
+  printf("bg : %d\n", statements->bg);
   for (size_t i = 0; i < statements->num_statements; i++) {
     print_statement(&statements->statements[i]);
   }
-  printf("num_statements : %ld\n", statements->num_statements);
-  printf("bg : %d\n", statements->bg);
 }
 
-void parser_main(tokenizer_t* tokens){
+void parser_main(tokenizer_t* tokenizer){
+  parser_t parser = {
+    .tokenizer = tokenizer,
+    .current_token = tokenizer_next(tokenizer)
+  };
 
+  while(parser.current_token->type!=TOKEN_EOF){
+    exec_compound(parser_compound(&parser));
+  }
 }
 
 command_t* parser_cmd(parser_t* parser){
 
-  vector_t* argv = make_vector(sizeof(char**));
+  vector_t* argv = make_vector(sizeof(char*));
 
   while(parser->current_token->type == TOKEN_STRING){
     char* str = token_extract(parser->current_token);
@@ -61,10 +68,9 @@ command_t* parser_cmd(parser_t* parser){
 }
 
 statement_t* parser_statement(parser_t* p){
-  //
-  statement_t* current_statement = new_statement();
 
-  vector_t* cmds = make_vector(sizeof(command_t*));
+  statement_t* current_statement = new_statement();
+  vector_t* cmds = make_vector(sizeof(command_t));
 
   vector_append(cmds,parser_cmd(p));
 
@@ -104,9 +110,11 @@ statement_t* parser_statement(parser_t* p){
   switch (p->current_token->type) {
     case TOKEN_AND:
       current_statement->go_on_condition = GO_ON_IF_SUCCESS;
+      p->current_token = tokenizer_next(p->tokenizer);
       break;
     case TOKEN_OR:
       current_statement->go_on_condition = GO_ON_IF_FAILURE;
+      p->current_token = tokenizer_next(p->tokenizer);
       break;
     default :
       //TODO errors
@@ -114,217 +122,36 @@ statement_t* parser_statement(parser_t* p){
       break;
   }
   current_statement->num_commands = cmds->size;
-  current_statement->cmds=vector_extract_buffer(cmds);
+  current_statement->cmds = (command_t*) vector_extract_buffer(cmds);
 
   return current_statement;
 }
 
-compound_statement_t* parser_compound(parser_t* parser){
-  compound_statement_t* temp;
-  return temp;
-}
+compound_statement_t* parser_compound(parser_t* p){
 
+  compound_statement_t* current_compound = new_compound();
+  vector_t* statements = make_vector(sizeof(statement_t));
+  statement_t* cs;
+  cs = parser_statement(p);
+  //print_statement(cs);
+  vector_append(statements,cs);
 
-compound_statement_t* parse_statement(tokenizer_t* tokens){
-  /*
-  Premierement, on a des tokens. Pour séparer les Statement, c'est qu'on
-  croise &&, || ou ;.
-
-  Ensuite a l'intérieur d'un statement, on sépare les commandes quand on
-  croise un |.
-
-  Si on croise une redirection de flux, on est content, on la stock au bon
-  endroit et on implementera ça plus tard ^^
-  */
-
-  // Token
-  token_t* current_token ;
-
-  // Statements
-  vector_t* statement_vector = make_vector(sizeof(statement_t*));
-  statement_t* current_statement= new_statement();
-  statement_t* statement_temp;
-
-  // Statement
-  vector_t* cmd_vector = make_vector(sizeof(command_t*));
-  command_t* current_cmds;
-
-  // Commande
-  vector_t* argv = make_vector(sizeof(char**));
-  char** current_argv;
-
-  char* str;
-
-  current_token = tokenizer_next(tokens);
-
-  while(current_token->type != TOKEN_END){
-    switch (current_token->type) {
-
-      case TOKEN_OR:
-      case TOKEN_AND:
-
-        // We just read && or ||
-        // We have to extract last cmd first,
-          // cmd.append(argv)
-        // And then we fill current_statement:
-          // cmd.append(argv)
-          // set go_on_condition
-          // set num_commands
-          // extract cmds from cmd_vector
-          // set cmds
-          // statement_vector.append(current_statement);
-          // reset current_statement
-
-        // 1 cmd.append(argv)
-        current_argv = (char**) vector_extract_buffer(argv);
-        vector_append(cmd_vector, &current_argv);
-        argv = make_vector(sizeof(char**));
-        printf("line 99 : cmd_vector.append(argv) ; argv = new vector\n");
-        //printf("\t cmd_vector -> size : %ld\n", cmd_vector->size);
-
-        // 2 set go_on_condition
-        switch (current_token->type) {
-          case TOKEN_AND:
-            printf("line 105 : setting go_on_condition to &&\n");
-            current_statement->go_on_condition = GO_ON_IF_SUCCESS;
-            break;
-          case TOKEN_OR:
-            printf("line 109 : setting go_on_condition to ||\n" );
-            current_statement->go_on_condition = GO_ON_IF_FAILURE;
-            break;
-          default :
-            //TODO errors
-            //TODO or maybe not
-            break;
-        }
-
-        // 3 set num_commands
-        current_statement->num_commands = cmd_vector->size;
-        // 4 extract cmds from cmd_vector
-        current_cmds = (command_t*) vector_extract_buffer(cmd_vector);
-        // 5 set cmds
-        current_statement->cmds = current_cmds;
-        // 6 append
-        vector_append(statement_vector, current_statement);
-
-        printf("line 127 : test print(current_statement)\n");
-        print_statement(current_statement);
-        printf("line 127 : statement_vector.append(cur_statement); cur_statement = new vector; \n");
-        printf("\t statement_vector -> size : %ld\n", statement_vector->size);
-
-        // 7 reset
-        current_statement = new_statement();
-        cmd_vector = make_vector(sizeof(command_t*));
-
-        // get next tokens
-        token_free(current_token);
-        current_token = tokenizer_next(tokens);
-        break;
-
-
-
-      case TOKEN_REDIRECT_IN:
-        token_free(current_token);
-        current_token = tokenizer_next(tokens); //TODO errors
-        current_statement->redirect_in_file = token_extract(current_token);
-        current_token = tokenizer_next(tokens);
-        break;
-
-      case TOKEN_REDIRECT_OUT_APP:
-        current_statement->redirect_append = true;
-      case TOKEN_REDIRECT_OUT:
-        token_free(current_token);
-        current_token = tokenizer_next(tokens); //TODO errors
-        current_statement->redirect_out_file = token_extract(current_token);
-        current_token = tokenizer_next(tokens);
-        break;
-
-      case TOKEN_PIPE:
-        current_argv = (char**) vector_extract_buffer(argv);
-        vector_append(cmd_vector, &current_argv);
-        argv = make_vector(sizeof(char**));
-        token_free(current_token);
-        current_token = tokenizer_next(tokens);
-        printf("line 165 : cmd_vector.append(argv) ; argv = new vector\n");
-        printf("\t cmd_vector -> size : %ld\n", cmd_vector->size);
-        break;
-
-      case TOKEN_STRING:
-          str = token_extract(current_token);
-          vector_append(argv, &str);
-          current_token = tokenizer_next(tokens);
-          printf("line 173 : argv.append(%s)\n", str);
-          fflush(stdout);
-          break;
-
-      default :
-        //TODO Handle error correctly
-        //printf("Syntax error\n");
-        //return NULL;
-        break;
-
-    }
+  while(p->current_token->type!=TOKEN_END &&
+        p->current_token->type!=TOKEN_BG &&
+        p->current_token->type!=TOKEN_EOF){
+    cs = parser_statement(p);
+    //print_statement(cs);
+    vector_append(statements,cs);
   }
-  // We read ;
-  // We have to extract last cmd first,
-    // cmd.append(argv)
-  // And then we fill current_statement:
-    // set go_on_condition
-    // set num_commands
-    // extract cmds from cmd_vector
-    // set cmds
-    // statement_vector.append(current_statement);
-    // reset current_statement
-  // Then we fill compound_statement
-    // set bg
-    // set num_statements
-    // extract statements from statement_vector
-    // set statement
-  // Clean
 
-  // 1 cmd.append(argv)
-  current_argv = (char**) vector_extract_buffer(argv);
-  vector_append(cmd_vector, &current_argv);
-  argv = make_vector(sizeof(char**));
-  printf("line 206 : cmd_vector.append(argv) ; argv = new vector\n");
-  //printf("\t cmd_vector -> size : %ld\n", cmd_vector->size);
+  if(p->current_token->type==TOKEN_BG){
+    current_compound->bg = true ;
+  }
 
-  // 2 set go_on_condition
-  current_statement->go_on_condition = GO_ON_NEVER;
+  current_compound->num_statements = statements->size;
+  current_compound->statements = (statement_t*)vector_extract_buffer(statements);
 
-  // 3 set num_commands
-  current_statement->num_commands = cmd_vector->size;
-  // 4 extract cmds from cmd_vector
-  current_cmds = (command_t*) vector_extract_buffer(cmd_vector);
-  // 5 set cmds
-  current_statement->cmds = current_cmds;
-  // 6 append
-  vector_append(statement_vector, current_statement);
-
-  printf("line 221 : test print(current_statement)\n");
-  print_statement(current_statement);
-  printf("line 223 : statement_vector.append(cur_statement); cur_statement = new vector; \n");
-  printf("\t statement_vector -> size : %ld\n", statement_vector->size);
-
-  // 7 reset
-  cmd_vector = make_vector(sizeof(command_t*));
-
-  // get next tokens
-  token_free(current_token);
-  current_token = tokenizer_next(tokens);
-
-
-  compound_statement_t* compound_statement = (compound_statement_t*) malloc (sizeof(compound_statement_t)) ;
-  compound_statement->bg = false;
-  compound_statement->num_statements =  statement_vector->size;
-  statement_temp = vector_extract_buffer(statement_vector);
-  compound_statement->statements = statement_temp;
-
-
-  printf("line 241 : test print(compound_statement)\n");
-  print_statements(compound_statement);
-  //TODO clean
-  return compound_statement;
+  return current_compound;
 }
 
 void static close_all_pipes(pipe_t *pipes, int size) {
@@ -355,7 +182,7 @@ command_t* new_commande(){
 }
 
 
-int exec_statements(compound_statement_t *t) {
+int exec_compound(compound_statement_t *t) {
     int         count_cmd;
     pid_t       *sons;
     int         status;

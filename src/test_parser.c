@@ -6,7 +6,7 @@
 #include <unistd.h>
 
 static void test_parser_exec(test_t *t) {
-    compound_statement_t test_statements = {
+    compound_statement_t test_compound = {
         .bg         = false,
         .statements = (statement_t[]){
             (statement_t){
@@ -54,7 +54,7 @@ static void test_parser_exec(test_t *t) {
         .bg             = false
     };
 
-    if (exec_statements(&test_statements) != 0) {
+    if (exec_compound(&test_compound) != 0) {
         test_fail(t);
     }
 }
@@ -89,7 +89,7 @@ static void test_parser_cmd(test_t *t) {
 }
 
 static void test_parser_statement(test_t *t) {
-  char    *test_buf          = "echo -e banana coco foo ssh | echo coucou | grep banana || true && ls -la;";
+  char* test_buf = "echo -e banana coco foo ssh | echo coucou | grep banana || true && ls -la;";
   tokenizer_t *tokenizer = new_tokenizer(test_buf);
   parser_t parser_test = {
     .tokenizer = tokenizer,
@@ -118,35 +118,116 @@ static void test_parser_statement(test_t *t) {
   statement_t* expected_statement = &expected_statement_static;
   statement_t* test_statement = parser_statement(&parser_test);
 
+  if(expected_statement == test_statement){
+    printf("Nani ?\n");
+  }
+
+  /*
   printf("Test parser statement\nExp : ");
   print_statement(expected_statement);
   printf("Got : ");
   print_statement(test_statement);
+  */
 
-  /*for (size_t i = 0; i < sizeof(test_command->argv)/sizeof(test_command->argv[0]); i++) {
+  /*
+  for (size_t i = 0; i < sizeof(test_command->argv)/sizeof(test_command->argv[0]); i++) {
     if (strcmp(expected_command->argv[i],test_command->argv[i])!=0) {
         printf("Got %s but expected %s",test_command->argv[i],expected_command->argv[i]);
         puts("");
         test_fail(t);
     }
-  }*/
+  }
+  */
 }
 
-
-static void test_parse_statement(test_t *t){
-  char    *test_buf          = "echo 1 | cat && echo banane";
+static void test_parser_compound(test_t *t) {
+  char* test_buf = "echo -e banana coco foo ssh | echo coucou | grep banana || true && ls -la;";
   tokenizer_t *tokenizer = new_tokenizer(test_buf);
-  compound_statement_t* statements = parse_statement(tokenizer);
-  print_statements(statements);
-}
+  parser_t parser_test = {
+    .tokenizer = tokenizer,
+    .current_token = tokenizer_next(tokenizer)
+  };
 
+  compound_statement_t expected_compound_static = {
+      .bg         = false,
+      .statements = (statement_t[]){
+          (statement_t){
+              .cmds              = (command_t[]){
+                  {
+                      .argv      = (char *[]){"echo","-e", "banana coco foo ssh", NULL }
+                  },
+                  {
+                      .argv      = (char *[]){"echo","coucou", NULL }
+                  },
+                  {
+                      .argv      = (char *[]){"grep","banana", NULL }
+                  }
+              },
+              .num_commands      = 3,
+              .go_on_condition   = GO_ON_IF_FAILURE,
+              .redirect_in_file  = NULL,
+              .redirect_out_file = NULL,
+              .redirect_append   = false
+          }, (statement_t){
+              .cmds              = (command_t[]){
+                  {
+                      .argv      = (char *[]){"true",NULL }
+                  }
+              },
+              .num_commands      = 1,
+              .go_on_condition   = GO_ON_IF_SUCCESS,
+              .redirect_in_file  = NULL,
+              .redirect_out_file = NULL,
+              .redirect_append   = false
+          }, (statement_t){
+              .cmds              = (command_t[]){
+                  {
+                      .argv      = (char *[]){"ls", "-la", NULL }
+                  }
+              },
+              .num_commands      = 1,
+              .go_on_condition   = GO_ON_NEVER,
+              .redirect_in_file  = NULL,
+              .redirect_out_file = NULL,
+              .redirect_append   = false
+          }
+      },
+      .num_statements = 3,
+      .bg             = false
+  };
+
+  compound_statement_t* expected_compound = &expected_compound_static;
+  compound_statement_t* test_compound = parser_compound(&parser_test);
+
+  if(expected_compound == test_compound){
+    printf("Nani ?\n");
+  }
+
+
+  printf("Test parser_compound\nExp : ");
+  print_compound(expected_compound);
+  printf("Got : ");
+  print_compound(test_compound);
+
+
+  /*
+  for (size_t i = 0; i < sizeof(test_command->argv)/sizeof(test_command->argv[0]); i++) {
+    if (strcmp(expected_command->argv[i],test_command->argv[i])!=0) {
+        printf("Got %s but expected %s",test_command->argv[i],expected_command->argv[i]);
+        puts("");
+        test_fail(t);
+    }
+  }
+  */
+}
 
 int main() {
     test_function_t tests[] = {
         //TEST_FUNCTION(test_parser_exec),
         TEST_FUNCTION(test_parser_cmd),
-        TEST_FUNCTION(test_parser_statement)
-    };
+        TEST_FUNCTION(test_parser_statement),
+        TEST_FUNCTION(test_parser_compound)
+};
 
     return test_run(tests, ARRAY_LEN(tests));
 }

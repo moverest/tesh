@@ -40,9 +40,11 @@ token_t *tokenizer_next(tokenizer_t *tokenizer) {
     switch (tokenizer->buf[tokenizer->pos]) {
     case ';':
         incr = 1;
+        token = new_token(TOKEN_END, NULL, 0);
+        break;
 
     case '\0':
-        token = new_token(TOKEN_END, NULL, 0);
+        token = new_token(TOKEN_EOF, NULL, 0);
         break;
 
     case '<':
