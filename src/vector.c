@@ -46,7 +46,6 @@ int vector_change_cap(vector_t *vector, size_t new_cap) {
 }
 
 
-#include <stdio.h>
 int vector_append(vector_t *vector, void *element) {
     if (vector->cap < vector->size + 1) {
         int err = vector_change_cap(vector,
