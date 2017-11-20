@@ -1,7 +1,7 @@
 BUILD_DIR = build
 SRC_DIR = src
 
-CFLAGS = -Wall
+CFLAGS = -Wall -std=gnu99
 CFLAGS_DEBUG = -g -DDEBUG
 CC = gcc $(CFLAGS)
 
@@ -9,7 +9,7 @@ CC = gcc $(CFLAGS)
 all: $(BUILD_DIR) $(BUILD_DIR)/tesh tesh
 
 .PHONY: tests
-tests: $(BUILD_DIR) $(BUILD_DIR)/test_tokenizer $(BUILD_DIR)/test_parser
+tests: $(BUILD_DIR) $(BUILD_DIR)/test_tokenizer $(BUILD_DIR)/test_parser $(BUILD_DIR)/test_vector
 
 .PHONY: debug
 debug: CFLAGS += $(CFLAGS_DEBUG)
@@ -20,10 +20,12 @@ clean:
 	rm -rvf $(BUILD_DIR) tesh
 
 $(BUILD_DIR)/tesh: $(BUILD_DIR)/tokenizer.o
-$(BUILD_DIR)/tokenizer: $(SRC_DIR)/tokenizer.h
-$(BUILD_DIR)/parser: $(SRC_DIR)/parser.h
+$(BUILD_DIR)/tokenizer.o: $(SRC_DIR)/tokenizer.h
+$(BUILD_DIR)/parser.o: $(SRC_DIR)/parser.h
+$(BUILD_DIR)/vector.o: $(SRC_DIR)/vector.h
 $(BUILD_DIR)/test_tokenizer: $(BUILD_DIR)/tokenizer.o $(BUILD_DIR)/test.o
 $(BUILD_DIR)/test_parser: $(BUILD_DIR)/parser.o $(BUILD_DIR)/test.o
+$(BUILD_DIR)/test_vector: $(BUILD_DIR)/vector.o $(BUILD_DIR)/test.o
 $(BUILD_DIR)/test: $(SRC_DIR)/test.h
 
 tesh: run
