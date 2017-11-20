@@ -18,20 +18,24 @@ static void test_vector_creation(test_t *t) {
                __FILE__, __LINE__, vector->size);
     }
 
-#define TEST_CAPACITY    30
-    vector = make_vector_with_capacity(sizeof(int), TEST_CAPACITY);
+    vector_free(vector);
+
+#define TEST_CAP    30
+    vector = make_vector_with_cap(sizeof(int), TEST_CAP);
     if (vector == NULL) {
         printf("%s:%d: make_vector should not return NULL\n",
                __FILE__, __LINE__);
         test_fail(t);
     }
 
-    if (vector->cap != TEST_CAPACITY) {
+    if (vector->cap != TEST_CAP) {
         printf("%s:%d: vector->cap = %ld not %d\n",
                __FILE__, __LINE__,
-               vector->cap, TEST_CAPACITY);
+               vector->cap, TEST_CAP);
         test_fail(t);
     }
+
+    vector_free(vector);
 }
 
 
@@ -70,6 +74,8 @@ static void test_vector_append(test_t *t) {
             test_fail(t);
         }
     }
+
+    vector_free(vector);
 }
 
 
