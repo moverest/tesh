@@ -64,3 +64,8 @@ int vector_append(vector_t *vector, void *element) {
 void vector_reset(vector_t *vector) {
     vector->size = 0;
 }
+
+void vector_free(vector_t *vector) {
+  free(vector->buf);
+  free(vector);
+}

@@ -37,6 +37,9 @@ int vector_append(vector_t *vector, void *element);
 // member is updated.
 void vector_reset(vector_t *vector);
 
+// vector_free frees the vector from memory.
+void vector_free(vector_t *vector);
+
 
 // To access the values in the vector, you can simply cast the buffer into
 // another variable.
