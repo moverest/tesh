@@ -7,7 +7,7 @@
 
 
 
-static bool command_equals(command_t *c1, command_t *t2) {
+static bool command_equals(command_t *c1, command_t *c2) {
   bool equals = true ;
   for (size_t i = 0; c1->argv[i]!=NULL && equals; i++) {
     equals = equals && (strcmp(c1->argv[i],c2->argv[i])==0);
@@ -160,7 +160,6 @@ static void test_parser_statement(test_t *t) {
       test_fail(t);
     }
 
-
 }
 
 
@@ -223,17 +222,10 @@ static void test_parser_compound(test_t *t) {
     compound_statement_t *expected_compound = &expected_compound_static;
     compound_statement_t *test_compound     = parser_compound(&parser_test);
 
+    if(!compound_equals(compound_statement, compound_statement)){
+      test_fail(t);
+    }
 
-
-    /*
-     * for (size_t i = 0; i < sizeof(test_command->argv)/sizeof(test_command->argv[0]); i++) {
-     * if (strcmp(expected_command->argv[i],test_command->argv[i])!=0) {
-     *    printf("Got %s but expected %s",test_command->argv[i],expected_command->argv[i]);
-     *    puts("");
-     *    test_fail(t);
-     * }
-     * }
-     */
 }
 
 
