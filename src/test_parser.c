@@ -5,6 +5,44 @@
 #include <string.h>
 #include <unistd.h>
 
+
+
+static bool command_equals(command_t *c1, command_t *t2) {
+  bool equals = true ;
+  for (size_t i = 0; c1->argv[i]!=NULL && equals; i++) {
+    equals = equals && (strcmp(c1->argv[i],c2->argv[i])==0);
+  }
+  return equals ;
+}
+
+static bool statement_equals(statement_t *s1, statement_t *s2) {
+  bool equals = true ;
+  equals = equals && (s1->num_commands == s2->num_commands);
+  equals = equals && (s1->go_on_condition == s2->go_on_condition);
+  equals = equals && (s1->redirect_append == s2->redirect_append);
+  equals = equals && (strcmp(s1->redirect_in_file,s2->redirect_in_file)==0);
+  equals = equals && (strcmp(s1->redirect_out_file,s2->redirect_out_file)==0);
+
+  for (size_t i = 0; (i < s1->num_commands) && equals ; i++) {
+    equals = equals && command_equals(s1->cmds[i], s2->cmds[i]);
+  }
+  return equals;
+}
+
+static bool token_compound(compound_statement_t *c1, compound_statement_t *c2) {
+  bool equals = true ;
+  equals = equals && (c1->num_statements == c2->num_statements);
+  equals = equals && (c1->bg == c2->bg);
+
+  for (size_t i = 0; (i < c1->num_statements) && equals ; i++) {
+    equals = equals && statement_equals(c1->statements[i], c2->statements[i]);
+  }
+  return equals;
+}
+
+
+
+
 static void test_parser_exec(test_t *t) {
     compound_statement_t test_compound = {
         .bg         = false,
@@ -75,23 +113,15 @@ static void test_parser_cmd(test_t *t) {
     command_t *expected_command = &expected_command_static;
     command_t *test_command     = parser_cmd(&parser_test);
 
-    /*printf("Test parser cmd\nExp : ");
-     * print_command(expected_command);
-     * printf("Got : ");
-     * print_command(test_command); */
-
-    for (size_t i = 0; i < sizeof(test_command->argv) / sizeof(test_command->argv[0]); i++) {
-        if (strcmp(expected_command->argv[i], test_command->argv[i]) != 0) {
-            printf("Got %s but expected %s", test_command->argv[i], expected_command->argv[i]);
-            puts("");
-            test_fail(t);
-        }
+    if(!command_equals(test_command, expected_command)){
+      test_fail(t);
     }
+
 }
 
 
 static void test_parser_statement(test_t *t) {
-    char        *test_buf   = "echo -e banana coco foo ssh | echo coucou | grep banana || true && ls -la;";
+    char        *test_buf   = "echo -e banana\\ncoco\\nfoo\\nssh | echo coucou | grep banana || true && ls -la;";
     tokenizer_t *tokenizer  = new_tokenizer(test_buf);
     parser_t    parser_test = {
         .tokenizer     = tokenizer,
@@ -102,7 +132,7 @@ static void test_parser_statement(test_t *t) {
         .cmds = (command_t[]){
             {
                 .argv = (char *[]){
-                    "echo", "-e", "banana coco foo ssh", NULL
+                    "echo", "-e", "banana\\ncoco\\nfoo\\nssh", NULL
                 }
             },
             {
@@ -126,26 +156,11 @@ static void test_parser_statement(test_t *t) {
     statement_t *expected_statement = &expected_statement_static;
     statement_t *test_statement     = parser_statement(&parser_test);
 
-    if (expected_statement == test_statement) {
-        printf("Nani ?\n");
+    if(!statement_equals(expected_statement, expected_statement)){
+      test_fail(t);
     }
 
-    /*
-     * printf("Test parser statement\nExp : ");
-     * print_statement(expected_statement);
-     * printf("Got : ");
-     * print_statement(test_statement);
-     */
 
-    /*
-     * for (size_t i = 0; i < sizeof(test_command->argv)/sizeof(test_command->argv[0]); i++) {
-     * if (strcmp(expected_command->argv[i],test_command->argv[i])!=0) {
-     *    printf("Got %s but expected %s",test_command->argv[i],expected_command->argv[i]);
-     *    puts("");
-     *    test_fail(t);
-     * }
-     * }
-     */
 }
 
 
@@ -208,15 +223,6 @@ static void test_parser_compound(test_t *t) {
     compound_statement_t *expected_compound = &expected_compound_static;
     compound_statement_t *test_compound     = parser_compound(&parser_test);
 
-    if (expected_compound == test_compound) {
-        printf("Nani ?\n");
-    }
-
-
-    printf("Test parser_compound\nExp : ");
-    print_compound(expected_compound);
-    printf("Got : ");
-    print_compound(test_compound);
 
 
     /*
