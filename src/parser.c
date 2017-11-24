@@ -80,8 +80,8 @@ void parser_main(tokenizer_t *tokenizer) {
     };
     compound_statement_t* next_compound;
     while (parser.current_token->type != TOKEN_EOF) {
-      next_compound = parser_compound(&parser) ;
-      exec_compound(next_compound);
+      next_compound = parser_compound(&parser);  //TODO errors
+      exec_compound(next_compound);  //TODO errors
       free_compound(next_compound);
     }
     free_parser(&parser);
@@ -91,11 +91,14 @@ void parser_main(tokenizer_t *tokenizer) {
 command_t *parser_cmd(parser_t *parser) {
     vector_t *argv = make_vector(sizeof(char *));
 
+    //TODO errors (if current_token->type != string)
+
     while (parser->current_token->type == TOKEN_STRING) {
         char *str = token_extract(parser->current_token);
         vector_append(argv, &str);
         parser->current_token = tokenizer_next(parser->tokenizer);
     }
+
     command_t *cmd = (command_t *)malloc(sizeof(command_t));
     cmd->argv = (char **)vector_extract_buffer(argv);
 
@@ -107,41 +110,31 @@ statement_t *parser_statement(parser_t *p) {
     statement_t *current_statement = new_statement();
     vector_t    *cmds = make_vector(sizeof(command_t));
 
-    vector_append(cmds, parser_cmd(p));
+    vector_append(cmds, parser_cmd(p)); //TODO errors
 
-    while ((p->current_token->type == TOKEN_REDIRECT_IN) ||
-           (p->current_token->type == TOKEN_REDIRECT_OUT) ||
-           (p->current_token->type == TOKEN_REDIRECT_OUT_APP) ||
-           (p->current_token->type == TOKEN_PIPE)) {
-        switch (p->current_token->type) {
-        case TOKEN_REDIRECT_IN:
-            token_free(p->current_token);
-            p->current_token = tokenizer_next(p->tokenizer); //TODO errors
-            current_statement->redirect_in_file = token_extract(p->current_token);
-            p->current_token = tokenizer_next(p->tokenizer);
-            break;
-
-        case TOKEN_REDIRECT_OUT_APP:
-            current_statement->redirect_append = true;
-
-        case TOKEN_REDIRECT_OUT:
-            token_free(p->current_token);
-            p->current_token = tokenizer_next(p->tokenizer); //TODO errors
-            current_statement->redirect_out_file = token_extract(p->current_token);
-            p->current_token = tokenizer_next(p->tokenizer);
-            break;
-
-        case TOKEN_PIPE:
-            token_free(p->current_token);
-            p->current_token = tokenizer_next(p->tokenizer); //TODO errors
-            vector_append(cmds, parser_cmd(p));
-            //p->current_token = tokenizer_next(p->tokenizer);
-            break;
-
-        default:
-            break;
-        }
+    if(p->current_token->type == TOKEN_REDIRECT_IN){
+          token_free(p->current_token);
+          p->current_token = tokenizer_next(p->tokenizer); //TODO errors
+          current_statement->redirect_in_file = token_extract(p->current_token);
+          p->current_token = tokenizer_next(p->tokenizer);
     }
+
+    while (p->current_token->type == TOKEN_PIPE){
+        token_free(p->current_token);
+        p->current_token = tokenizer_next(p->tokenizer); //TODO errors
+        vector_append(cmds, parser_cmd(p)); //TODO errors
+    }
+
+    bool app;
+    if((app=(p->current_token->type == TOKEN_REDIRECT_OUT_APP)) ||
+       (p->current_token->type == TOKEN_REDIRECT_OUT)){
+      current_statement->redirect_append = app;
+      token_free(p->current_token);
+      p->current_token = tokenizer_next(p->tokenizer); //TODO errors
+      current_statement->redirect_out_file = token_extract(p->current_token);
+      p->current_token = tokenizer_next(p->tokenizer);
+    }
+
     // After a list of commands, there is a &&, || or ;
     switch (p->current_token->type) {
     case TOKEN_AND:
@@ -156,7 +149,6 @@ statement_t *parser_statement(parser_t *p) {
 
     default:
         //TODO errors
-        //TODO or maybe not
         break;
     }
     current_statement->num_commands = cmds->size;
@@ -171,14 +163,14 @@ compound_statement_t *parser_compound(parser_t *p) {
     vector_t             *statements       = make_vector(sizeof(statement_t));
     statement_t          *cs;
 
-    cs = parser_statement(p);
+    cs = parser_statement(p); //TODO errors
     //print_statement(cs);
     vector_append(statements, cs);
 
     while (p->current_token->type != TOKEN_END &&
            p->current_token->type != TOKEN_BG &&
            p->current_token->type != TOKEN_EOF) {
-        cs = parser_statement(p);
+        cs = parser_statement(p); //TODO errors
         //print_statement(cs);
         vector_append(statements, cs);
     }
@@ -228,7 +220,7 @@ command_t *new_commande() {
 }
 
 
-int exec_compound(compound_statement_t *t) {
+int exec_compound(compound_statement_t *cp) {
     int         count_cmd;
     pid_t       *sons;
     int         status;
@@ -236,8 +228,8 @@ int exec_compound(compound_statement_t *t) {
     bool        temp1;
     bool        temp2;
 
-    for (size_t i = 0; i < t->num_statements; i++) { // Pour chaque statement_t
-        st        = t->statements[i];
+    for (size_t i = 0; i < cp->num_statements; i++) { // Pour chaque statement_t
+        st        = cp->statements[i];
         count_cmd = st.num_commands;
         pipe_t pipes[count_cmd - 1];
 
@@ -254,11 +246,15 @@ int exec_compound(compound_statement_t *t) {
                     // Si ce n'est pas la premiere commande de la chaine
                     // On redirige l'entrée
                     dup2(pipes[j - 1].fd[0], 0);
+                } else {
+                  // Handle redirect_input here
                 }
                 if (j < count_cmd - 1) {
                     // Si ce n'est pas la derniere commande de la chaine
                     // On redirige la sortie
                     dup2(pipes[j].fd[1], 1);
+                } else {
+                  // Handle redirect output here
                 }
 
                 close_all_pipes(pipes, count_cmd - 1);

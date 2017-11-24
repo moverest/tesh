@@ -232,7 +232,7 @@ static void test_parser_compound(test_t *t) {
 
 int main() {
     test_function_t tests[] = {
-        //TEST_FUNCTION(test_parser_exec),
+        TEST_FUNCTION(test_parser_exec),
         TEST_FUNCTION(test_parser_cmd),
         TEST_FUNCTION(test_parser_statement),
         TEST_FUNCTION(test_parser_compound)
