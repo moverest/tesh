@@ -1,46 +1,75 @@
-#include "parser.h"
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 
+#include "parser.h"
 #include "tools.h"
 #include "parser.h"
 #include "tokenizer.h"
 #include "vector.h"
 
+void free_parser(parser_t* parser){
+  token_free(parser->current_token);
+  tokenizer_next(parser->tokenizer);
+}
+
+void free_command(command_t* cmd){
+  for (size_t i = 0; cmd->argv[i] != NULL; i++) {
+      free(cmd->argv[i]);
+  }
+  free(cmd->argv);
+  free(cmd);
+}
+
+void free_statement(statement_t* st){
+  for (size_t i = 0; i < st->num_commands; i++) {
+      free_command(&st->cmds[i]);
+  }
+  free(st->redirect_in_file);
+  free(st->redirect_out_file);
+  free(st);
+}
+
+void free_compound(compound_statement_t* cp){
+  for (size_t i = 0; i < cp->num_statements; i++) {
+      free_statement(&cp->statements[i]);
+  }
+  free(cp);
+}
 
 
 void print_command(command_t *cmd) {
     for (size_t i = 0; cmd->argv[i] != NULL; i++) {
         printf("%s ", cmd->argv[i]);
     }
-    puts("");
+    putchar('\n');
 }
 
 
-void print_statement(statement_t *statement) {
+void print_statement(statement_t *st) {
     printf("Cmds :\n");
-    for (size_t i = 0; i < statement->num_commands; i++) {
-        print_command(&statement->cmds[i]);
+    for (size_t i = 0; i < st->num_commands; i++) {
+        print_command(&st->cmds[i]);
     }
-    printf("num_commands %ld\n", statement->num_commands);
-    printf("GoOnCdt : %d\n", statement->go_on_condition);
-    printf("redirect_in_file : %s\n", statement->redirect_in_file);
-    printf("redirect_out_file : %s\n", statement->redirect_out_file);
-    printf("redirect_app : %d\n", statement->redirect_append);
-    puts("");
+    printf("num_commands %ld\n", st->num_commands);
+    printf("GoOnCdt : %d\n", st->go_on_condition);
+    printf("redirect_in_file : %s\n", st->redirect_in_file);
+    printf("redirect_out_file : %s\n", st->redirect_out_file);
+    printf("redirect_app : %d\n", st->redirect_append);
+    putchar('\n');
 }
 
 
-void print_compound(compound_statement_t *statements) {
+void print_compound(compound_statement_t *cp) {
     printf("Statement : \n");
-    printf("num_statements : %ld\n", statements->num_statements);
-    printf("bg : %d\n", statements->bg);
-    for (size_t i = 0; i < statements->num_statements; i++) {
-        print_statement(&statements->statements[i]);
+    printf("num_statements : %ld\n", cp->num_statements);
+    printf("bg : %d\n", cp->bg);
+    for (size_t i = 0; i < cp->num_statements; i++) {
+        print_statement(&cp->statements[i]);
     }
+    putchar('\n');
 }
 
 
@@ -49,10 +78,13 @@ void parser_main(tokenizer_t *tokenizer) {
         .tokenizer     = tokenizer,
         .current_token = tokenizer_next(tokenizer)
     };
-
+    compound_statement_t* next_compound;
     while (parser.current_token->type != TOKEN_EOF) {
-        exec_compound(parser_compound(&parser));
+      next_compound = parser_compound(&parser) ;
+      exec_compound(next_compound);
+      free_compound(next_compound);
     }
+    free_parser(&parser);
 }
 
 
