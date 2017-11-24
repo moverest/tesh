@@ -9,38 +9,36 @@
 
 
 static bool command_equals(command_t *c1, command_t *c2) {
-  bool equals = true ;
-  for (size_t i = 0; c1->argv[i]!=NULL && equals; i++) {
-    equals = equals && (strcmp(c1->argv[i],c2->argv[i])==0);
+  for (size_t i = 0; c1->argv[i]!=NULL; i++) {
+    if(strcmp(c1->argv[i],c2->argv[i])!=0) return false ;
   }
-  return equals ;
+  return true;
 }
 
 static bool statement_equals(statement_t *s1, statement_t *s2) {
-  bool equals = true ;
-  equals = equals && (s1->num_commands == s2->num_commands);
-  equals = equals && (s1->go_on_condition == s2->go_on_condition);
-  equals = equals && ((s1->redirect_in_file==NULL && s2->redirect_in_file==NULL) ||
-                      (strcmp(s1->redirect_in_file,s2->redirect_in_file)==0) );
-  equals = equals && ((s1->redirect_out_file==NULL && s2->redirect_out_file==NULL) ||
-                      (strcmp(s1->redirect_out_file,s2->redirect_out_file)==0) );
-  equals = equals && (s1->redirect_append == s2->redirect_append);
 
-  for (size_t i = 0; ((i < s1->num_commands) && equals) ; i++) {
-    equals = equals && (command_equals(&(s1->cmds[i]), &(s2->cmds[i])));
+  if(s1->num_commands != s2->num_commands) return false;
+  if(s1->go_on_condition != s2->go_on_condition) return false;
+  if(!((s1->redirect_in_file==NULL && s2->redirect_in_file==NULL) ||
+      (strcmp(s1->redirect_in_file,s2->redirect_in_file)==0))) return false;
+  if(!((s1->redirect_out_file==NULL && s2->redirect_out_file==NULL) ||
+      (strcmp(s1->redirect_out_file,s2->redirect_out_file)==0))) return false;
+  if(s1->redirect_append != s2->redirect_append) return false;
+
+  for (size_t i = 0;i < s1->num_commands; i++) {
+    if(!command_equals(&(s1->cmds[i]), &(s2->cmds[i]))) return false;
   }
-  return equals;
+  return true;
 }
 
 static bool compound_equals(compound_statement_t *c1, compound_statement_t *c2) {
-  bool equals = true ;
-  equals = equals && (c1->num_statements == c2->num_statements);
-  equals = equals && (c1->bg == c2->bg);
+  if(c1->num_statements != c2->num_statements) return false ;
+  if(c1->bg != c2->bg) return false ;
 
-  for (size_t i = 0; (i < c1->num_statements) && equals ; i++) {
-    equals = equals && statement_equals(&(c1->statements[i]), &(c2->statements[i]));
+  for (size_t i = 0; i < c1->num_statements; i++) {
+    if(!statement_equals(&(c1->statements[i]), &(c2->statements[i]))) return false;
   }
-  return equals;
+  return true;
 }
 
 
