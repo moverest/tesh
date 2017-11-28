@@ -6,7 +6,7 @@
 // Lexer
 
 tokenizer_t *new_tokenizer(char *buf) {
-    tokenizer_t *tokenizer = malloc(sizeof(tokenizer_t));
+    tokenizer_t *tokenizer = (tokenizer_t*) malloc(sizeof(tokenizer_t));
 
     if (tokenizer == NULL) {
         return NULL;
@@ -39,10 +39,13 @@ token_t *tokenizer_next(tokenizer_t *tokenizer) {
 
     switch (tokenizer->buf[tokenizer->pos]) {
     case ';':
-        incr = 1;
+    case '\n':
+        incr  = 1;
+        token = new_token(TOKEN_END, NULL, 0);
+        break;
 
     case '\0':
-        token = new_token(TOKEN_END, NULL, 0);
+        token = new_token(TOKEN_EOF, NULL, 0);
         break;
 
     case '<':
@@ -94,15 +97,15 @@ token_t *tokenizer_next(tokenizer_t *tokenizer) {
 
 
 token_t *new_token(token_type_t type, char *str, size_t len) {
-    token_t *token = malloc(sizeof(token_t));
+    token_t *token = (token_t*) malloc(sizeof(token_t));
 
     if (token == NULL) {
         return NULL;
     }
     token->type = type;
-
+    token->str  = NULL;
     if (str != NULL) {
-        token->str = malloc(sizeof(char) * (len + 1));
+        token->str = (char*) malloc(sizeof(char) * (len + 1));
         if (token->str == NULL) {
             free(token);
             return NULL;
@@ -114,6 +117,14 @@ token_t *new_token(token_type_t type, char *str, size_t len) {
 
 
     return token;
+}
+
+
+char *token_extract(token_t *token) {
+    char *str = token->str;
+
+    free(token);
+    return str;
 }
 
 

@@ -12,7 +12,8 @@ typedef enum {
     TOKEN_OR,
     TOKEN_PIPE,
     TOKEN_END,
-    TOKEN_BG
+    TOKEN_BG,
+    TOKEN_EOF
 } token_type_t;
 
 typedef struct {
@@ -31,5 +32,6 @@ token_t *tokenizer_next(tokenizer_t *tokenizer);
 
 token_t *new_token(token_type_t type, char *str, size_t len);
 void token_free(token_t *token);
+char *token_extract(token_t *token);
 
 #endif
