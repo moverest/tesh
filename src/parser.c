@@ -10,33 +10,36 @@
 #include "tokenizer.h"
 #include "vector.h"
 
-void free_parser(parser_t* parser){
-  token_free(parser->current_token);
-  tokenizer_next(parser->tokenizer);
+void free_parser(parser_t *parser) {
+    token_free(parser->current_token);
+    tokenizer_next(parser->tokenizer);
 }
 
-void free_command(command_t* cmd){
-  for (size_t i = 0; cmd->argv[i] != NULL; i++) {
-      free(cmd->argv[i]);
-  }
-  free(cmd->argv);
-  free(cmd);
+
+void free_command(command_t *cmd) {
+    for (size_t i = 0; cmd->argv[i] != NULL; i++) {
+        free(cmd->argv[i]);
+    }
+    free(cmd->argv);
+    free(cmd);
 }
 
-void free_statement(statement_t* st){
-  for (size_t i = 0; i < st->num_commands; i++) {
-      free_command(&st->cmds[i]);
-  }
-  free(st->redirect_in_file);
-  free(st->redirect_out_file);
-  free(st);
+
+void free_statement(statement_t *st) {
+    for (size_t i = 0; i < st->num_commands; i++) {
+        free_command(&st->cmds[i]);
+    }
+    free(st->redirect_in_file);
+    free(st->redirect_out_file);
+    free(st);
 }
 
-void free_compound(compound_statement_t* cp){
-  for (size_t i = 0; i < cp->num_statements; i++) {
-      free_statement(&cp->statements[i]);
-  }
-  free(cp);
+
+void free_compound(compound_statement_t *cp) {
+    for (size_t i = 0; i < cp->num_statements; i++) {
+        free_statement(&cp->statements[i]);
+    }
+    free(cp);
 }
 
 
@@ -74,15 +77,16 @@ void print_compound(compound_statement_t *cp) {
 
 
 void parser_main(tokenizer_t *tokenizer) {
-    parser_t parser = {
+    parser_t             parser = {
         .tokenizer     = tokenizer,
         .current_token = tokenizer_next(tokenizer)
     };
-    compound_statement_t* next_compound;
+    compound_statement_t *next_compound;
+
     while (parser.current_token->type != TOKEN_EOF) {
-      next_compound = parser_compound(&parser);  //TODO errors
-      exec_compound(next_compound);  //TODO errors
-      free_compound(next_compound);
+        next_compound = parser_compound(&parser); //TODO errors
+        exec_compound(next_compound);             //TODO errors
+        free_compound(next_compound);
     }
     free_parser(&parser);
 }
@@ -112,27 +116,27 @@ statement_t *parser_statement(parser_t *p) {
 
     vector_append(cmds, parser_cmd(p)); //TODO errors
 
-    if(p->current_token->type == TOKEN_REDIRECT_IN){
-          token_free(p->current_token);
-          p->current_token = tokenizer_next(p->tokenizer); //TODO errors
-          current_statement->redirect_in_file = token_extract(p->current_token);
-          p->current_token = tokenizer_next(p->tokenizer);
+    if (p->current_token->type == TOKEN_REDIRECT_IN) {
+        token_free(p->current_token);
+        p->current_token = tokenizer_next(p->tokenizer);   //TODO errors
+        current_statement->redirect_in_file = token_extract(p->current_token);
+        p->current_token = tokenizer_next(p->tokenizer);
     }
 
-    while (p->current_token->type == TOKEN_PIPE){
+    while (p->current_token->type == TOKEN_PIPE) {
         token_free(p->current_token);
         p->current_token = tokenizer_next(p->tokenizer); //TODO errors
-        vector_append(cmds, parser_cmd(p)); //TODO errors
+        vector_append(cmds, parser_cmd(p));              //TODO errors
     }
 
     bool app;
-    if((app=(p->current_token->type == TOKEN_REDIRECT_OUT_APP)) ||
-       (p->current_token->type == TOKEN_REDIRECT_OUT)){
-      current_statement->redirect_append = app;
-      token_free(p->current_token);
-      p->current_token = tokenizer_next(p->tokenizer); //TODO errors
-      current_statement->redirect_out_file = token_extract(p->current_token);
-      p->current_token = tokenizer_next(p->tokenizer);
+    if ((app = (p->current_token->type == TOKEN_REDIRECT_OUT_APP)) ||
+        (p->current_token->type == TOKEN_REDIRECT_OUT)) {
+        current_statement->redirect_append = app;
+        token_free(p->current_token);
+        p->current_token = tokenizer_next(p->tokenizer); //TODO errors
+        current_statement->redirect_out_file = token_extract(p->current_token);
+        p->current_token = tokenizer_next(p->tokenizer);
     }
 
     // After a list of commands, there is a &&, || or ;
@@ -247,14 +251,14 @@ int exec_compound(compound_statement_t *cp) {
                     // On redirige l'entrée
                     dup2(pipes[j - 1].fd[0], 0);
                 } else {
-                  // Handle redirect_input here
+                    // Handle redirect_input here
                 }
                 if (j < count_cmd - 1) {
                     // Si ce n'est pas la derniere commande de la chaine
                     // On redirige la sortie
                     dup2(pipes[j].fd[1], 1);
                 } else {
-                  // Handle redirect output here
+                    // Handle redirect output here
                 }
 
                 close_all_pipes(pipes, count_cmd - 1);

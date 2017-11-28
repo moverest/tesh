@@ -9,39 +9,58 @@
 
 
 static bool command_equals(command_t *c1, command_t *c2) {
-  for (size_t i = 0; c1->argv[i]!=NULL; i++) {
-    if(strcmp(c1->argv[i],c2->argv[i])!=0) return false ;
-  }
-  return true;
+    for (size_t i = 0; c1->argv[i] != NULL; i++) {
+        if (strcmp(c1->argv[i], c2->argv[i]) != 0) {
+            return false;
+        }
+    }
+    return true;
 }
+
 
 static bool statement_equals(statement_t *s1, statement_t *s2) {
+    if (s1->num_commands != s2->num_commands) {
+        return false;
+    }
+    if (s1->go_on_condition != s2->go_on_condition) {
+        return false;
+    }
+    if (!(((s1->redirect_in_file == NULL) && (s2->redirect_in_file == NULL)) ||
+          (strcmp(s1->redirect_in_file, s2->redirect_in_file) == 0))) {
+        return false;
+    }
+    if (!(((s1->redirect_out_file == NULL) && (s2->redirect_out_file == NULL)) ||
+          (strcmp(s1->redirect_out_file, s2->redirect_out_file) == 0))) {
+        return false;
+    }
+    if (s1->redirect_append != s2->redirect_append) {
+        return false;
+    }
 
-  if(s1->num_commands != s2->num_commands) return false;
-  if(s1->go_on_condition != s2->go_on_condition) return false;
-  if(!((s1->redirect_in_file==NULL && s2->redirect_in_file==NULL) ||
-      (strcmp(s1->redirect_in_file,s2->redirect_in_file)==0))) return false;
-  if(!((s1->redirect_out_file==NULL && s2->redirect_out_file==NULL) ||
-      (strcmp(s1->redirect_out_file,s2->redirect_out_file)==0))) return false;
-  if(s1->redirect_append != s2->redirect_append) return false;
-
-  for (size_t i = 0;i < s1->num_commands; i++) {
-    if(!command_equals(&(s1->cmds[i]), &(s2->cmds[i]))) return false;
-  }
-  return true;
+    for (size_t i = 0; i < s1->num_commands; i++) {
+        if (!command_equals(&(s1->cmds[i]), &(s2->cmds[i]))) {
+            return false;
+        }
+    }
+    return true;
 }
+
 
 static bool compound_equals(compound_statement_t *c1, compound_statement_t *c2) {
-  if(c1->num_statements != c2->num_statements) return false ;
-  if(c1->bg != c2->bg) return false ;
+    if (c1->num_statements != c2->num_statements) {
+        return false;
+    }
+    if (c1->bg != c2->bg) {
+        return false;
+    }
 
-  for (size_t i = 0; i < c1->num_statements; i++) {
-    if(!statement_equals(&(c1->statements[i]), &(c2->statements[i]))) return false;
-  }
-  return true;
+    for (size_t i = 0; i < c1->num_statements; i++) {
+        if (!statement_equals(&(c1->statements[i]), &(c2->statements[i]))) {
+            return false;
+        }
+    }
+    return true;
 }
-
-
 
 
 static void test_parser_exec(test_t *t) {
@@ -51,13 +70,13 @@ static void test_parser_exec(test_t *t) {
             (statement_t){
                 .cmds              = (command_t[]){
                     {
-                        .argv      = (char *[]){"echo","-e", "banana\\ncoco\\nfoo\\nssh", NULL }
+                        .argv      = (char *[]){"echo","-e",              "banana\\ncoco\\nfoo\\nssh", NULL }
                     },
                     {
-                        .argv      = (char *[]){"echo","coucou \n", NULL }
+                        .argv      = (char *[]){"echo","coucou \n",       NULL }
                     },
                     {
-                        .argv      = (char *[]){"grep","banana", NULL }
+                        .argv      = (char *[]){"grep","banana",          NULL }
                     }
                 },
                 .num_commands      = 3,
@@ -79,7 +98,7 @@ static void test_parser_exec(test_t *t) {
             }, (statement_t){
                 .cmds              = (command_t[]){
                     {
-                        .argv      = (char *[]){"ls", "-la", NULL }
+                        .argv      = (char *[]){"ls", "-la",             NULL }
                     }
                 },
                 .num_commands      = 1,
@@ -114,10 +133,9 @@ static void test_parser_cmd(test_t *t) {
     command_t *expected_command = &expected_command_static;
     command_t *test_command     = parser_cmd(&parser_test);
 
-    if(!command_equals(test_command, expected_command)){
-      test_fail(t);
+    if (!command_equals(test_command, expected_command)) {
+        test_fail(t);
     }
-
 }
 
 
@@ -157,10 +175,9 @@ static void test_parser_statement(test_t *t) {
     statement_t *expected_statement = &expected_statement_static;
     statement_t *test_statement     = parser_statement(&parser_test);
 
-    if(!statement_equals(expected_statement, test_statement)){
-      test_fail(t);
+    if (!statement_equals(expected_statement, test_statement)) {
+        test_fail(t);
     }
-
 }
 
 
@@ -178,13 +195,13 @@ static void test_parser_compound(test_t *t) {
             (statement_t){
                 .cmds              = (command_t[]){
                     {
-                        .argv      = (char *[]){"echo","-e","banana\\ncoco\\nfoo\\nssh", NULL }
+                        .argv      = (char *[]){"echo","-e",              "banana\\ncoco\\nfoo\\nssh", NULL }
                     },
                     {
-                        .argv      = (char *[]){"echo","coucou",  NULL }
+                        .argv      = (char *[]){"echo","coucou",          NULL }
                     },
                     {
-                        .argv      = (char *[]){"grep","banana",NULL }
+                        .argv      = (char *[]){"grep","banana",          NULL }
                     }
                 },
                 .num_commands      = 3,
@@ -206,7 +223,7 @@ static void test_parser_compound(test_t *t) {
             }, (statement_t){
                 .cmds              = (command_t[]){
                     {
-                        .argv      = (char *[]){"ls", "-la",NULL }
+                        .argv      = (char *[]){"ls", "-la",             NULL }
                     }
                 },
                 .num_commands      = 1,
@@ -223,10 +240,9 @@ static void test_parser_compound(test_t *t) {
     compound_statement_t *expected_compound = &expected_compound_static;
     compound_statement_t *test_compound     = parser_compound(&parser_test);
 
-    if(!compound_equals(expected_compound, test_compound)){
-      test_fail(t);
+    if (!compound_equals(expected_compound, test_compound)) {
+        test_fail(t);
     }
-
 }
 
 

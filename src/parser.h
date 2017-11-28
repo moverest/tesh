@@ -41,22 +41,22 @@ typedef struct {
 } parser_t;
 
 
-void free_parser(parser_t* parser);
+void free_parser(parser_t *parser);
 
 command_t *new_commande();
 command_t *parser_cmd(parser_t *parser);
 void print_command(command_t *cmd);
-void free_command(command_t* cmd);
+void free_command(command_t *cmd);
 
 statement_t *new_statement();
 statement_t *parser_statement(parser_t *parser);
 void print_statement(statement_t *st);
-void free_statement(statement_t* st);
+void free_statement(statement_t *st);
 
 compound_statement_t *new_compound();
 compound_statement_t *parser_compound(parser_t *parser);
 void print_compound(compound_statement_t *cp);
 int exec_compound(compound_statement_t *cp);
-void free_compound(compound_statement_t* cp);
+void free_compound(compound_statement_t *cp);
 
 #endif
