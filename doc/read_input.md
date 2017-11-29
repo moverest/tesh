@@ -17,3 +17,10 @@ Buffer size for input command is set to 255
 <!--![sequence diagram](./tesh.png)-->
 <img alt="sequence diagram" src="./tesh.png"/>
 </div>
+
+
+## Prompt
+The terminal prompt's form is : `USER@HOSTNAME:REPCOURANT$`, with
+* USER the name of the current user
+* HOSTNAME the hostname of the machine
+* REPCOURANT the working directory
