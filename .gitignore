@@ -2,3 +2,4 @@
 /tesh
 /TAGS
 *.o
+/src/*.gch
