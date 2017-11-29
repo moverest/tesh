@@ -7,7 +7,7 @@
 #include "input_reader.h"
 
 static void test_prompt(test_t* t){
-  char test_prompt[255] {0} ;
+  char test_prompt[255] = {0} ;
   char expt_prompt[255] = "john@noah:/home/john/Github/rs2017-martinez-calvet$";
 
   // Redirect stdout (printf in display_prompt) to our test buffer
@@ -23,10 +23,26 @@ static void test_prompt(test_t* t){
   }
 }
 
+static void test_get_input(test_t* t){
+  char test_cmd[255] = {0} ;
+  char expt_cmd[255] = "echo foo ; echo bar";
+
+  // First (bad but easy) solution : ask user to write "echo foo ; echo bar"
+  printf("Please write :\"echo foo ; echo bar\" \n");
+  int ret = get_input(test_cmd);
+  if(ret!=0){
+    if(test_cmd == NULL || strncmp(test_cmd, expt_cmd, 255)!=0){
+      printf("Got %s but expected %s \n", test_cmd, expt_cmd);
+      test_fail(t);
+    }
+  }
+}
+
 
 int main() {
     test_function_t tests[] = {
         TEST_FUNCTION(test_prompt),
+        TEST_FUNCTION(test_get_input)
     };
 
 
