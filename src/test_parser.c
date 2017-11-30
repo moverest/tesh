@@ -9,31 +9,26 @@
 
 
 static bool command_equals(command_t *c1, command_t *c2) {
-    for (size_t i = 0; c1->argv[i] != NULL; i++) {
+    size_t i;
+
+    for (i = 0; c1->argv[i] != NULL && c2->argv[i] != NULL; i++) {
         if (strcmp(c1->argv[i], c2->argv[i]) != 0) {
             return false;
         }
     }
-    return true;
+
+    return c1->argv[i] == NULL && c2->argv[i] == NULL;
 }
 
 
 static bool statement_equals(statement_t *s1, statement_t *s2) {
-    if (s1->num_commands != s2->num_commands) {
-        return false;
-    }
-    if (s1->go_on_condition != s2->go_on_condition) {
-        return false;
-    }
-    if (!(((s1->redirect_in_file == NULL) && (s2->redirect_in_file == NULL)) ||
-          (strcmp(s1->redirect_in_file, s2->redirect_in_file) == 0))) {
-        return false;
-    }
-    if (!(((s1->redirect_out_file == NULL) && (s2->redirect_out_file == NULL)) ||
-          (strcmp(s1->redirect_out_file, s2->redirect_out_file) == 0))) {
-        return false;
-    }
-    if (s1->redirect_append != s2->redirect_append) {
+    if ((s1->num_commands != s2->num_commands) ||
+        (s1->go_on_condition != s2->go_on_condition) ||
+        (!(((s1->redirect_in_file == NULL) && (s2->redirect_in_file == NULL)) ||
+           (strcmp(s1->redirect_in_file, s2->redirect_in_file) == 0))) ||
+        (!(((s1->redirect_out_file == NULL) && (s2->redirect_out_file == NULL)) ||
+           (strcmp(s1->redirect_out_file, s2->redirect_out_file) == 0))) ||
+        (s1->redirect_append != s2->redirect_append)) {
         return false;
     }
 
@@ -42,15 +37,13 @@ static bool statement_equals(statement_t *s1, statement_t *s2) {
             return false;
         }
     }
+
     return true;
 }
 
 
 static bool compound_equals(compound_statement_t *c1, compound_statement_t *c2) {
-    if (c1->num_statements != c2->num_statements) {
-        return false;
-    }
-    if (c1->bg != c2->bg) {
+    if ((c1->num_statements != c2->num_statements) || (c1->bg != c2->bg)) {
         return false;
     }
 
@@ -59,6 +52,7 @@ static bool compound_equals(compound_statement_t *c1, compound_statement_t *c2) 
             return false;
         }
     }
+
     return true;
 }
 
