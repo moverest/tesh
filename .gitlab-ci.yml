@@ -10,7 +10,7 @@ your-own-test: # feel free to modify this test and add more
                 - ls
                 - apt-get update && apt-get -y install build-essential && apt-get -y install gcc
                 - make debug
-                - /build/test_vector
-                - /build/test_parser
-                - /build/tets_tokenizer
-                - /build/test_input_reader
+                - ./build/test_vector
+                - ./build/test_parser
+                - ./build/tets_tokenizer
+                - ./build/test_input_reader
