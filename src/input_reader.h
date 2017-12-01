@@ -2,20 +2,27 @@
 #define INPUT_READER_H_IMPORTED
 
 #include <stdbool.h>
+#include <stdio.h>
 
 /** Compute prompt for interactive mode.
     Args :
-      prompt : where to store compupted prompt
-      max_len : maximum length for computed prompt
+      return_prompt : weither or not to return computed prompt
       display : weither or not to display computed prompt
     Return :
-      0 - success
-      -1 - else
+      if return_prompt, return computed prompt on success
+      if not, return '\0'
+      anyway, return NULL on failure
 */
-int display_prompt(char* prompt, int max_len, bool display);
+char* display_prompt(bool return_prompt, bool display);
 
-/** Wait for user to type a command, and return a clean buffer of 255 char max
-terminated by \0 */
-int get_input(char* buffer);
+/** Retrieve user input from fd.
+    Args :
+      if fd == stdin, launch interactive mode (AKA display prompt and wait for
+        user input).
+      else, read from fd.
+    Return :
+      
+      */
+char* get_input(FILE* fd);
 
 #endif

@@ -19,25 +19,26 @@ int vector_append_all_char(vector_t *vector, void *element, int size) {
     return 0;
 }
 
-int display_prompt(char* prompt, bool display){
+char* display_prompt(bool return_prompt, bool display){
   int size ;
+  char* prompt;
   struct passwd *p = getpwuid(getuid());
   char* user = p->pw_name;
   if (user==NULL){
     perror("Error while retrieving username.\n");
-    return -1;
+    return NULL;
   }
 
   char host[256];
   if(gethostname(host,256)!=0 || host == NULL){
     perror("Error while retrieving hostname.\n");
-    return -1;
+    return NULL;
   }
 
   char cwd[512];
   if(getcwd(cwd, 512)== NULL){
     perror("Error while retrieving current working directory.\n");
-    return -1;
+    return NULL;
   }
 
   // Computed prompt
@@ -55,25 +56,55 @@ int display_prompt(char* prompt, bool display){
   size = prompt_vector->size;
   char* prompt_buffer = (char *) vector_extract_buffer(prompt_vector);
 
-  if(prompt != NULL)
+  if(return_prompt){
+    prompt = (char*) malloc(sizeof(char)*size);
+    if(prompt == NULL){
+      free(prompt);
+      return NULL;
+    }
     memcpy(prompt, prompt_buffer, size);
+
+  } else {
+    prompt = (char*) malloc(sizeof(char));
+    if(prompt == NULL){
+      free(prompt);
+      return NULL;
+    }
+    prompt[0] = '\0';
+  }
 
   if(display)
     printf("%s", prompt_buffer);
-  return 0;
+
+  free(prompt_buffer);
+  return prompt;
 }
 
-int get_input(char* buffer){
+char* get_input(FILE* fd){
   char tmp ;
-  vector_t* line = make_vector(sizeof(char));
+  vector_t* line_vector = make_vector(sizeof(char));
 
   // display_prompt
-  display_prompt(NULL, true);
+  if(fd == stdin){
+    char* ret = display_prompt(false, true);
+    if(ret == NULL){
+      perror("Error while computing prompt");
+      return NULL;
+    }
+    free(ret);
+  }
 
-  while((tmp = getchar())!= EOF && tmp != '\n')
-    vector_append(line, &tmp);
+  while((tmp = getc(fd))!= EOF && tmp != '\n')
+    vector_append(line_vector, &tmp);
 
-  int size = line->size;
-  memcpy(buffer, (char *) vector_extract_buffer(line), size);
-  return 0;
+  int size = line_vector->size;
+  char* line_buffer = (char *) vector_extract_buffer(line_vector);
+  char* line = (char*) malloc(sizeof(char)*size);
+  if(line == NULL){
+    free(line);
+    return NULL;
+  }
+  memcpy(line, line_buffer, size);
+  free(line_buffer);
+  return line;
 }
