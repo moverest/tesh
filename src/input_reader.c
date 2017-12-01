@@ -8,7 +8,19 @@
 
 #include "vector.h"
 
-int display_prompt(char* prompt, int max_len, bool display){
+int vector_append_all_char(vector_t *vector, void *element, int size) {
+    char* addr = (char*) element;
+    for (int i = 0; i < size && (addr[i] != '\0') && (&addr[i] != NULL); i++) {
+      int err = vector_append(vector, &addr[i]);
+      if (err) {
+          return err;
+      }
+    }
+    return 0;
+}
+
+int display_prompt(char* prompt, bool display){
+  int size ;
   struct passwd *p = getpwuid(getuid());
   char* user = p->pw_name;
   if (user==NULL){
@@ -29,20 +41,34 @@ int display_prompt(char* prompt, int max_len, bool display){
   }
 
   // Computed prompt
-  int prompt_size = snprintf(NULL, 0, "%s@%s:%s$", user, host, cwd);
-  if(prompt_size > max_len){
-    perror("Error : max length for prompt exceeded");
-    return -1;
-  }
-  snprintf(prompt, prompt_size+1, "%s@%s:%s$", user, host, cwd);
+  char sep1 = '@';
+  char sep2 = ':';
+  char sep3 = '$';
+
+  vector_t *prompt_vector = make_vector(sizeof(char));
+  vector_append_all_char(prompt_vector, user, sizeof(user));
+  vector_append(prompt_vector, &sep1);
+  vector_append_all_char(prompt_vector, host, sizeof(host));
+  vector_append(prompt_vector, &sep2);
+  vector_append_all_char(prompt_vector, cwd, sizeof(cwd));
+  vector_append(prompt_vector, &sep3);
+  size = prompt_vector->size;
+  char* prompt_buffer = (char *) vector_extract_buffer(prompt_vector);
+
+  if(prompt != NULL)
+    memcpy(prompt, prompt_buffer, size);
+
   if(display)
-    printf("%s", prompt);
+    printf("%s", prompt_buffer);
   return 0;
 }
 
 int get_input(char* buffer){
   char tmp ;
   vector_t* line = make_vector(sizeof(char));
+
+  // display_prompt
+  display_prompt(NULL, true);
 
   while((tmp = getchar())!= EOF && tmp != '\n')
     vector_append(line, &tmp);
