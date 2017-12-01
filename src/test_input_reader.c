@@ -7,6 +7,7 @@
 #include "input_reader.h"
 
 static void test_prompt(test_t* t){
+  // ONLY RELEVANT WHEN RUN ON MY MACHINE. PLEASE UPDATE TO USE
   char test_prompt[1024] = {0} ;
   char expt_prompt[255] = "john@noah:/home/john/Github/rs2017-martinez-calvet$";
 
@@ -41,7 +42,7 @@ static void test_get_input(test_t* t){
 
 int main() {
     test_function_t tests[] = {
-        TEST_FUNCTION(test_prompt),
+        //TEST_FUNCTION(test_prompt),
         TEST_FUNCTION(test_get_input)
     };
 
