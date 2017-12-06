@@ -85,7 +85,8 @@ token_t *tokenizer_next(tokenizer_t *tokenizer) {
 
     default:
         while (tokenizer->buf[tokenizer->pos + incr] != ' ' &&
-               tokenizer->buf[tokenizer->pos + incr] != '\0') {
+               tokenizer->buf[tokenizer->pos + incr] != '\0' &&
+               tokenizer->buf[tokenizer->pos + incr] != '\n') {
             incr++;
         }
         token = new_token(TOKEN_STRING, tokenizer->buf + tokenizer->pos, incr);
