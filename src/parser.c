@@ -22,7 +22,7 @@ void free_command(command_t *cmd) {
 
 void free_statement(statement_t *st) {
     for (size_t i = 0; i < st->num_commands; i++) {
-        free_command(&st->cmds[i]);
+        free_command(st->cmds[i]);
     }
     free(st->redirect_in_file);
     free(st->redirect_out_file);
@@ -32,7 +32,7 @@ void free_statement(statement_t *st) {
 
 void free_compound(compound_statement_t *cp) {
     for (size_t i = 0; i < cp->num_statements; i++) {
-        free_statement(&cp->statements[i]);
+        free_statement(cp->statements[i]);
     }
     free(cp);
 }
@@ -40,32 +40,33 @@ void free_compound(compound_statement_t *cp) {
 
 void print_command(command_t *cmd) {
     for (size_t i = 0; cmd->argv[i] != NULL; i++) {
-        printf("%s ", cmd->argv[i]);
+        printf("   %ld: '%s'\n", i, cmd->argv[i]);
     }
-    putchar('\n');
 }
 
 
 void print_statement(statement_t *st) {
-    printf("Cmds :\n");
+    puts(" Statement");
+    printf("   num_commands: %ld\n", st->num_commands);
+    char *go_on_condition_str[] = { "SUCCESS", "FAILURE", "NEVER" };
+    printf("   go_on_condition: %s\n",
+           go_on_condition_str[st->go_on_condition]);
+    printf("   redirect_in_file: %s\n", st->redirect_in_file);
+    printf("   redirect_out_file: %s\n", st->redirect_out_file);
+    printf("   redirect_app: %d\n", st->redirect_append);
     for (size_t i = 0; i < st->num_commands; i++) {
-        print_command(&st->cmds[i]);
+        print_command(st->cmds[i]);
     }
-    printf("num_commands %ld\n", st->num_commands);
-    printf("GoOnCdt : %d\n", st->go_on_condition);
-    printf("redirect_in_file : %s\n", st->redirect_in_file);
-    printf("redirect_out_file : %s\n", st->redirect_out_file);
-    printf("redirect_app : %d\n", st->redirect_append);
     putchar('\n');
 }
 
 
 void print_compound(compound_statement_t *cp) {
-    printf("Statement : \n");
-    printf("num_statements : %ld\n", cp->num_statements);
-    printf("bg : %d\n", cp->bg);
+    puts("Compound statement");
+    printf(" num_statements: %ld\n", cp->num_statements);
+    printf(" bg: %d\n", cp->bg);
     for (size_t i = 0; i < cp->num_statements; i++) {
-        print_statement(&cp->statements[i]);
+        print_statement(cp->statements[i]);
     }
     putchar('\n');
 }
@@ -120,9 +121,11 @@ command_t *parser_cmd(parser_t *parser) {
 
 statement_t *parser_statement(parser_t *p) {
     statement_t *current_statement = new_statement();
-    vector_t    *cmds = make_vector(sizeof(command_t));
+    vector_t    *cmds = make_vector(sizeof(command_t *));
 
-    vector_append(cmds, parser_cmd(p)); //TODO errors
+    command_t *current_command = parser_cmd(p);
+
+    vector_append(cmds, &current_command); //TODO errors
 
     if (p->current_token->type == TOKEN_REDIRECT_IN) {
         token_free(p->current_token);
@@ -134,13 +137,14 @@ statement_t *parser_statement(parser_t *p) {
     while (p->current_token->type == TOKEN_PIPE) {
         token_free(p->current_token);
         p->current_token = tokenizer_next(p->tokenizer); //TODO errors
-        vector_append(cmds, parser_cmd(p));              //TODO errors
+        current_command  = parser_cmd(p);
+        vector_append(cmds, &current_command);           //TODO errors
     }
 
-    bool app;
-    if ((app = (p->current_token->type == TOKEN_REDIRECT_OUT_APP)) ||
+    bool append;
+    if ((append = (p->current_token->type == TOKEN_REDIRECT_OUT_APP)) ||
         (p->current_token->type == TOKEN_REDIRECT_OUT)) {
-        current_statement->redirect_append = app;
+        current_statement->redirect_append = append;
         token_free(p->current_token);
         p->current_token = tokenizer_next(p->tokenizer); //TODO errors
         current_statement->redirect_out_file = token_extract(p->current_token);
@@ -163,8 +167,10 @@ statement_t *parser_statement(parser_t *p) {
         //TODO errors
         break;
     }
+
+
     current_statement->num_commands = cmds->size;
-    current_statement->cmds         = (command_t *)vector_extract_buffer(cmds);
+    current_statement->cmds         = (command_t **)vector_extract_buffer(cmds);
 
     return current_statement;
 }
@@ -172,19 +178,17 @@ statement_t *parser_statement(parser_t *p) {
 
 compound_statement_t *parser_compound(parser_t *p) {
     compound_statement_t *current_compound = new_compound();
-    vector_t             *statements       = make_vector(sizeof(statement_t));
+    vector_t             *statements       = make_vector(sizeof(statement_t *));
     statement_t          *cs;
 
     cs = parser_statement(p); //TODO errors
-    //print_statement(cs);
-    vector_append(statements, cs);
+    vector_append(statements, &cs);
 
     while (p->current_token->type != TOKEN_END &&
            p->current_token->type != TOKEN_BG &&
            p->current_token->type != TOKEN_EOF) {
         cs = parser_statement(p); //TODO errors
-        //print_statement(cs);
-        vector_append(statements, cs);
+        vector_append(statements, &cs);
     }
 
     if (p->current_token->type == TOKEN_BG) {
@@ -192,17 +196,9 @@ compound_statement_t *parser_compound(parser_t *p) {
     }
 
     current_compound->num_statements = statements->size;
-    current_compound->statements     = (statement_t *)vector_extract_buffer(statements);
+    current_compound->statements     = (statement_t **)vector_extract_buffer(statements);
 
     return current_compound;
-}
-
-
-void static close_all_pipes(pipe_t *pipes, int size) {
-    for (size_t i = 0; i < size; i++) {
-        close(pipes[i].fd[0]);
-        close(pipes[i].fd[1]);
-    }
 }
 
 
@@ -221,91 +217,82 @@ statement_t *new_statement() {
     statement->redirect_append = false;
     statement->num_commands    = 0;
     statement->go_on_condition = GO_ON_NEVER;
+
     return statement;
 }
 
 
-command_t *new_commande() {
-    command_t *command = (command_t *)malloc(sizeof(command_t));
+int exec_statement(statement_t *statement, int *status) {
+    int pd_in[2], pd_out[2];
 
-    return command;
+    pid_t *pids = malloc(sizeof(pid_t) * statement->num_commands);
+
+    if (pids == NULL) {
+        return 1;
+    }
+
+#define IS_FIRST_CMD(i)    (i == 0)
+#define IS_LAST_CMD(i)     (i + 1 == statement->num_commands)
+
+    for (size_t i = 0; i < statement->num_commands; i++) {
+        *pd_in = *pd_out;
+        if (!IS_LAST_CMD(i)) {
+            pipe(pd_out);
+        }
+
+        pid_t child_pid = fork();
+        if (child_pid == 0) {
+            if (!IS_LAST_CMD(i)) {
+                dup2(pd_out[1], 1);
+                close(pd_out[0]);
+                close(pd_out[1]);
+            }
+
+            if (!IS_FIRST_CMD(i)) {
+                dup2(pd_in[0], 0);
+                close(pd_in[0]);
+            }
+
+            execvp(statement->cmds[i]->argv[0], statement->cmds[i]->argv);
+            // TODO: Handle errors
+            exit(1);
+        }
+
+        if (!IS_LAST_CMD(i)) {
+            close(pd_out[1]);
+        }
+
+        if (!IS_FIRST_CMD(i)) {
+            close(pd_in[0]);
+        }
+
+        pids[i] = child_pid;
+    }
+
+    for (size_t i = 0; i < statement->num_commands; i++) {
+        waitpid(pids[i], status, 0);
+    }
+
+    return 0;
 }
 
 
-int exec_compound(compound_statement_t *cp) {
-    int         count_cmd;
-    pid_t       *sons;
-    int         status;
-    statement_t st;
-    bool        temp1;
-    bool        temp2;
+int exec_compound(compound_statement_t *cstatement) {
+    int last_status_code = 0;
 
-    for (size_t i = 0; i < cp->num_statements; i++) { // Pour chaque statement_t
-        st        = cp->statements[i];
-        count_cmd = st.num_commands;
-        pipe_t pipes[count_cmd - 1];
-
-        for (size_t i = 0; i < count_cmd - 1; i++) {
-            pipe(pipes[i].fd);
+    for (size_t i = 0; i < cstatement->num_statements; i++) {
+        int status;
+        int err = exec_statement(cstatement->statements[i], &status);
+        if (err) {
+            return err + 100;
         }
 
-        sons = (int *)malloc(sizeof(int) * count_cmd);
-
-        for (size_t j = 0; j < count_cmd; j++) { // Pour chaque command_t
-            pid_t current_pid = fork();          //TODO errors
-            if (current_pid == 0) {              // On est dans le fils
-                if (j > 0) {
-                    // Si ce n'est pas la premiere commande de la chaine
-                    // On redirige l'entrée
-                    dup2(pipes[j - 1].fd[0], 0);
-                } else {
-                    // Handle redirect_input here
-                }
-                if (j < count_cmd - 1) {
-                    // Si ce n'est pas la derniere commande de la chaine
-                    // On redirige la sortie
-                    dup2(pipes[j].fd[1], 1);
-                } else {
-                    // Handle redirect output here
-                }
-
-                close_all_pipes(pipes, count_cmd - 1);
-
-                execvp(st.cmds[j].argv[0], st.cmds[j].argv);
-                //TODO errors
-                exit(1);
-            } else {
-                sons[j] = current_pid;
-            }
-        }
-
-        close_all_pipes(pipes, count_cmd - 1);
-
-        for (size_t j = 0; j < count_cmd; j++) {
-            //printf("Pid du fils qu'on attend : %d\n", (int) sons[j]);
-            waitpid(sons[j], &status, 0);
-        }/**/
-        //waitpid(sons[count_cmd-1], &status, 0);
-        free(sons);
-
-        temp1 = (WIFEXITED(status) && (WEXITSTATUS(status) != 0) &&
-                 st.go_on_condition == GO_ON_IF_FAILURE);
-        // Vaut true si la condition est || et que le code de retour est est
-        //différent de zéro (erreur)
-        temp2 = (WIFEXITED(status) && (WEXITSTATUS(status) == 0) &&
-                 st.go_on_condition == GO_ON_IF_SUCCESS);
-        // Vaut true si la condition est && et que le code de retour est est
-        // égale à zéro (succes)
-
-        /*printf("WIFEXITED : %d, WEXITSTATUS: %d, st.goOnCdt : %d (&&:%d, ||:%d),
-         * temp1 : %d, temp2 : %d \n",
-         * WIFEXITED(status),
-         * WEXITSTATUS(status),
-         * st.go_on_condition,GO_ON_IF_SUCCESS,GO_ON_IF_FAILURE, temp1, temp2 );
-         */
-        if (!(temp1 || temp2)) {
-            // Si on ne doit pas continuer, pour une raison ou l'autre
-            break;
+        last_status_code = WEXITSTATUS(status);
+        if (!((cstatement->statements[i]->go_on_condition == GO_ON_IF_SUCCESS) &&
+              (last_status_code == 0)) ||
+            ((cstatement->statements[i]->go_on_condition == GO_ON_IF_FAILURE) &&
+             (last_status_code != 0))) {
+            i++;
         }
     }
 
