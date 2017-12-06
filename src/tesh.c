@@ -9,6 +9,7 @@ int main() {
 
 
     while (parser->current_token->type != TOKEN_EOF) {
+
         compound_statement_t *current_compound = parser_compound(parser);
         if (current_compound == NULL) {
             perror("Fail to parse buffer.\n");
@@ -17,6 +18,10 @@ int main() {
         }
         exec_compound(current_compound);
         free_compound(current_compound);
+
+        // Execution succeed (or not), so we go on
+        buffer = get_input(stdin);
+        parser = new_parser(buffer);
     }
 
     parser_free(parser);

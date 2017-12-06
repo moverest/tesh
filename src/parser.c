@@ -21,11 +21,17 @@ void free_command(command_t *cmd) {
 
 
 void free_statement(statement_t *st) {
+
     for (size_t i = 0; i < st->num_commands; i++) {
         free_command(st->cmds[i]);
     }
-    free(st->redirect_in_file);
-    free(st->redirect_out_file);
+
+    if(st->redirect_in_file != NULL){
+      free(st->redirect_in_file);
+    }
+    if(st->redirect_out_file != NULL){
+      free(st->redirect_out_file);
+    }
     free(st);
 }
 
@@ -54,6 +60,7 @@ void print_statement(statement_t *st) {
     printf("   redirect_in_file: %s\n", st->redirect_in_file);
     printf("   redirect_out_file: %s\n", st->redirect_out_file);
     printf("   redirect_app: %d\n", st->redirect_append);
+    printf("   Cmds : \n");
     for (size_t i = 0; i < st->num_commands; i++) {
         print_command(st->cmds[i]);
     }
@@ -130,6 +137,7 @@ statement_t *parser_statement(parser_t *p) {
     if (p->current_token->type == TOKEN_REDIRECT_IN) {
         token_free(p->current_token);
         p->current_token = tokenizer_next(p->tokenizer);   //TODO errors
+
         current_statement->redirect_in_file = token_extract(p->current_token);
         p->current_token = tokenizer_next(p->tokenizer);
     }
@@ -167,7 +175,6 @@ statement_t *parser_statement(parser_t *p) {
         //TODO errors
         break;
     }
-
 
     current_statement->num_commands = cmds->size;
     current_statement->cmds         = (command_t **)vector_extract_buffer(cmds);
@@ -216,6 +223,8 @@ statement_t *new_statement() {
 
     statement->redirect_append = false;
     statement->num_commands    = 0;
+    statement->redirect_in_file = NULL;
+    statement->redirect_out_file = NULL;
     statement->go_on_condition = GO_ON_NEVER;
 
     return statement;
@@ -225,7 +234,7 @@ statement_t *new_statement() {
 int exec_statement(statement_t *statement, int *status) {
     int pd_in[2], pd_out[2];
 
-    pid_t *pids = malloc(sizeof(pid_t) * statement->num_commands);
+    pid_t *pids = (pid_t*)malloc(sizeof(pid_t) * statement->num_commands);
 
     if (pids == NULL) {
         return 1;
