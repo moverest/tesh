@@ -1,4 +1,4 @@
-cd test1/test2
+cd tests/test1/test2
 cd test3
 cd test3.1/
 pwd

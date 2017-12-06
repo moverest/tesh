@@ -65,6 +65,9 @@ char *get_input(FILE *file) {
             break;
         }
     }
+    /*if (current_char == EOF){
+      vector_append(line_vector, &current_char);
+    }*/
 
     return (char *)vector_extract_buffer(line_vector);
 }

@@ -112,6 +112,9 @@ command_t *parser_cmd(parser_t *parser) {
     vector_t *argv = make_vector(sizeof(char *));
 
     //TODO errors (if current_token->type != string)
+    if(parser->current_token->type != TOKEN_STRING){
+      return NULL;
+    }
 
     while (parser->current_token->type == TOKEN_STRING) {
         char *str = token_extract(parser->current_token);
@@ -132,12 +135,18 @@ statement_t *parser_statement(parser_t *p) {
 
     command_t *current_command = parser_cmd(p);
 
+    if(current_command == NULL){
+      return NULL;
+    }
+
     vector_append(cmds, &current_command); //TODO errors
 
     if (p->current_token->type == TOKEN_REDIRECT_IN) {
         token_free(p->current_token);
         p->current_token = tokenizer_next(p->tokenizer);   //TODO errors
-
+        if(p->current_token->type != TOKEN_STRING){
+          return NULL;
+        }
         current_statement->redirect_in_file = token_extract(p->current_token);
         p->current_token = tokenizer_next(p->tokenizer);
     }
@@ -146,6 +155,9 @@ statement_t *parser_statement(parser_t *p) {
         token_free(p->current_token);
         p->current_token = tokenizer_next(p->tokenizer); //TODO errors
         current_command  = parser_cmd(p);
+        if(current_command == NULL){
+          return NULL;
+        }
         vector_append(cmds, &current_command);           //TODO errors
     }
 
@@ -155,6 +167,9 @@ statement_t *parser_statement(parser_t *p) {
         current_statement->redirect_append = append;
         token_free(p->current_token);
         p->current_token = tokenizer_next(p->tokenizer); //TODO errors
+        if(p->current_token->type != TOKEN_STRING){
+          return NULL;
+        }
         current_statement->redirect_out_file = token_extract(p->current_token);
         p->current_token = tokenizer_next(p->tokenizer);
     }
@@ -189,12 +204,19 @@ compound_statement_t *parser_compound(parser_t *p) {
     statement_t          *cs;
 
     cs = parser_statement(p); //TODO errors
+    if(cs == NULL){
+      return NULL;
+    }
     vector_append(statements, &cs);
 
     while (p->current_token->type != TOKEN_END &&
+           p->current_token->type != TOKEN_NEXT &&
            p->current_token->type != TOKEN_BG &&
            p->current_token->type != TOKEN_EOF) {
         cs = parser_statement(p); //TODO errors
+        if(cs == NULL){
+          return NULL;
+        }
         vector_append(statements, &cs);
     }
 
@@ -297,10 +319,10 @@ int exec_compound(compound_statement_t *cstatement) {
         }
 
         last_status_code = WEXITSTATUS(status);
-        if (!((cstatement->statements[i]->go_on_condition == GO_ON_IF_SUCCESS) &&
-              (last_status_code == 0)) ||
-            ((cstatement->statements[i]->go_on_condition == GO_ON_IF_FAILURE) &&
-             (last_status_code != 0))) {
+        //printf("parser.c:320\tCode de retour : %d\n", last_status_code);
+        bool go_on = cstatement->statements[i]->go_on_condition ;
+        if (!(((go_on == GO_ON_IF_SUCCESS) && (last_status_code == 0)) ||
+            ((go_on == GO_ON_IF_FAILURE) && (last_status_code != 0)))) {
             i++;
         }
     }

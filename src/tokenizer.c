@@ -1,6 +1,7 @@
 #include "tokenizer.h"
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 
 // Lexer
@@ -32,19 +33,21 @@ static void skip_spaces(tokenizer_t *tokenizer) {
 token_t *tokenizer_next(tokenizer_t *tokenizer) {
     skip_spaces(tokenizer);
 
-
     token_t *token = NULL;
     size_t  incr   = 0;
 
 
     switch (tokenizer->buf[tokenizer->pos]) {
     case ';':
-    case '\n':
         incr  = 1;
+        token = new_token(TOKEN_NEXT, NULL, 0);
+        break;
+    case '\n':
         token = new_token(TOKEN_END, NULL, 0);
         break;
 
     case '\0':
+    case EOF:
         token = new_token(TOKEN_EOF, NULL, 0);
         break;
 
