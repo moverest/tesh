@@ -11,6 +11,7 @@
 #define CWD_MAX_LEN          512
 #define INPUT_DEFAULT_CAP    256
 
+
 char *get_prompt() {
     char *username = getenv("USER");
 
@@ -54,7 +55,7 @@ char *get_input(FILE *file) {
             perror("Error while computing prompt");
             return NULL;
         }
-        printf("%s\n", prompt);
+        printf("%s", prompt);
         free(prompt);
     }
 
