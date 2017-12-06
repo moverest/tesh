@@ -40,8 +40,11 @@ typedef struct {
     token_t     *current_token;
 } parser_t;
 
+// new_parser returns a initialized parser with the given string.
+parser_t *new_parser(char *s);
 
-void free_parser(parser_t *parser);
+// parser_free frees the given parser.
+void parser_free(parser_t *parser);
 
 command_t *new_commande();
 command_t *parser_cmd(parser_t *parser);
@@ -58,5 +61,7 @@ compound_statement_t *parser_compound(parser_t *parser);
 void print_compound(compound_statement_t *cp);
 int exec_compound(compound_statement_t *cp);
 void free_compound(compound_statement_t *cp);
+
+
 
 #endif

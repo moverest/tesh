@@ -10,11 +10,6 @@
 #include "tokenizer.h"
 #include "vector.h"
 
-void free_parser(parser_t *parser) {
-    token_free(parser->current_token);
-    tokenizer_next(parser->tokenizer);
-}
-
 
 void free_command(command_t *cmd) {
     for (size_t i = 0; cmd->argv[i] != NULL; i++) {
@@ -76,19 +71,32 @@ void print_compound(compound_statement_t *cp) {
 }
 
 
-void parser_main(tokenizer_t *tokenizer) {
-    parser_t             parser = {
-        .tokenizer     = tokenizer,
-        .current_token = tokenizer_next(tokenizer)
-    };
-    compound_statement_t *next_compound;
+parser_t *new_parser(char *s) {
+    parser_t *parser = (parser_t *)malloc(sizeof(parser_t));
 
-    while (parser.current_token->type != TOKEN_EOF) {
-        next_compound = parser_compound(&parser); //TODO errors
-        exec_compound(next_compound);             //TODO errors
-        free_compound(next_compound);
+    if (parser == NULL) {
+        return NULL;
     }
-    free_parser(&parser);
+
+    parser->tokenizer     = new_tokenizer(s);
+    parser->current_token = tokenizer_next(parser->tokenizer);
+
+    return parser;
+}
+
+
+void parser_free(parser_t *parser) {
+    if (parser == NULL) {
+        return;
+    }
+
+    if (parser->tokenizer != NULL) {
+        tokenizer_free(parser->tokenizer);
+    }
+
+    if (parser->current_token != NULL) {
+        token_free(parser->current_token);
+    }
 }
 
 
