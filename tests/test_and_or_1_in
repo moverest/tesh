@@ -1,0 +1,4 @@
+false && echo a
+true && echo b
+false || echo c
+true || echo d
