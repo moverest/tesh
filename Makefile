@@ -18,7 +18,7 @@ debug: all tests
 clean:
 	rm -rvf $(BUILD_DIR) tesh
 
-$(BUILD_DIR)/tesh: $(BUILD_DIR)/tokenizer.o
+$(BUILD_DIR)/tesh: $(foreach f, tokenizer input_reader vector parser, $(BUILD_DIR)/$f.o)
 $(BUILD_DIR)/tokenizer.o: $(SRC_DIR)/tokenizer.h
 $(BUILD_DIR)/parser.o: $(SRC_DIR)/parser.h
 $(BUILD_DIR)/vector.o: $(SRC_DIR)/vector.h
