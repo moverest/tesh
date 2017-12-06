@@ -1,0 +1,5 @@
+cd /vagrant/fixtures
+cd d2
+cd d2.1
+pwd
+ls

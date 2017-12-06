@@ -1,0 +1,1 @@
+false && echo a || echo b || echo c && echo d || echo e && echo f && false || echo g ; false && echo a || echo b || echo c && echo d || echo e && echo f && false || echo g
