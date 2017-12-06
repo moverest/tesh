@@ -3,6 +3,9 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
 
 #include "parser.h"
 #include "tools.h"
@@ -83,7 +86,8 @@ parser_t *new_parser(char *s) {
     parser_t *parser = (parser_t *)malloc(sizeof(parser_t));
 
     if (parser == NULL) {
-        return NULL;
+      perror("Error while initializing parser.");
+      return NULL;
     }
 
     parser->tokenizer     = new_tokenizer(s);
@@ -95,6 +99,7 @@ parser_t *new_parser(char *s) {
 
 void parser_free(parser_t *parser) {
     if (parser == NULL) {
+      perror("Error while freeing parser.");
         return;
     }
 
@@ -113,6 +118,7 @@ command_t *parser_cmd(parser_t *parser) {
 
     //TODO errors (if current_token->type != string)
     if(parser->current_token->type != TOKEN_STRING){
+      perror("Error while parsing a cmd. First token's type is not string.");
       return NULL;
     }
 
@@ -136,6 +142,7 @@ statement_t *parser_statement(parser_t *p) {
     command_t *current_command = parser_cmd(p);
 
     if(current_command == NULL){
+      perror ("There was an error while computing commande");
       return NULL;
     }
 
@@ -145,6 +152,7 @@ statement_t *parser_statement(parser_t *p) {
         token_free(p->current_token);
         p->current_token = tokenizer_next(p->tokenizer);   //TODO errors
         if(p->current_token->type != TOKEN_STRING){
+          perror("Error while parsing a redirection. First next token's type is not string.");
           return NULL;
         }
         current_statement->redirect_in_file = token_extract(p->current_token);
@@ -156,6 +164,7 @@ statement_t *parser_statement(parser_t *p) {
         p->current_token = tokenizer_next(p->tokenizer); //TODO errors
         current_command  = parser_cmd(p);
         if(current_command == NULL){
+          perror ("There was an error while computing commande");
           return NULL;
         }
         vector_append(cmds, &current_command);           //TODO errors
@@ -168,6 +177,7 @@ statement_t *parser_statement(parser_t *p) {
         token_free(p->current_token);
         p->current_token = tokenizer_next(p->tokenizer); //TODO errors
         if(p->current_token->type != TOKEN_STRING){
+          perror("Error while parsing a redirection. First next token's type is not string.");
           return NULL;
         }
         current_statement->redirect_out_file = token_extract(p->current_token);
@@ -205,6 +215,7 @@ compound_statement_t *parser_compound(parser_t *p) {
 
     cs = parser_statement(p); //TODO errors
     if(cs == NULL){
+      perror ("There was an error while computing statement");
       return NULL;
     }
     vector_append(statements, &cs);
@@ -215,6 +226,7 @@ compound_statement_t *parser_compound(parser_t *p) {
            p->current_token->type != TOKEN_EOF) {
         cs = parser_statement(p); //TODO errors
         if(cs == NULL){
+          perror ("There was an error while computing statement");
           return NULL;
         }
         vector_append(statements, &cs);
@@ -252,7 +264,6 @@ statement_t *new_statement() {
     return statement;
 }
 
-
 int exec_statement(statement_t *statement, int *status) {
     int pd_in[2], pd_out[2];
 
@@ -277,11 +288,40 @@ int exec_statement(statement_t *statement, int *status) {
                 dup2(pd_out[1], 1);
                 close(pd_out[0]);
                 close(pd_out[1]);
+            } else {
+              // It is indeed the last command, we should redirect output.
+              if(statement->redirect_out_file!=NULL){
+                int fd_out;
+                if(statement->redirect_append){
+                   fd_out = open(statement->redirect_out_file, O_WRONLY | O_CREAT | O_APPEND);
+                } else {
+                   fd_out = open(statement->redirect_out_file, O_WRONLY | O_CREAT | O_TRUNC);
+                }
+                if(fd_out==-1){
+                  perror("Error opening redirect out file.");
+                  return 1;
+                }
+
+                dup2(fd_out, 1);
+                close(fd_out);
+              }
             }
 
             if (!IS_FIRST_CMD(i)) {
                 dup2(pd_in[0], 0);
                 close(pd_in[0]);
+            } else {
+              if(statement->redirect_in_file!=NULL){
+                int fd_in = open(statement->redirect_in_file, O_RDONLY);
+
+                if(fd_in==-1){
+                  perror("Error opening redirect in file.");
+                  return 1;
+                }
+
+                dup2(fd_in, 0);
+                close(fd_in);
+              }
             }
 
             execvp(statement->cmds[i]->argv[0], statement->cmds[i]->argv);
