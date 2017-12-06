@@ -1,28 +1,16 @@
 #ifndef INPUT_READER_H_IMPORTED
 #define INPUT_READER_H_IMPORTED
 
-#include <stdbool.h>
 #include <stdio.h>
 
-/** Compute prompt for interactive mode.
-    Args :
-      return_prompt : weither or not to return computed prompt
-      display : weither or not to display computed prompt
-    Return :
-      if return_prompt, return computed prompt on success
-      if not, return '\0'
-      anyway, return NULL on failure
-*/
-char* display_prompt(bool return_prompt, bool display);
+// get_prompt returns a string with the prompt (to be displayed).
+char *get_prompt();
 
-/** Retrieve user input from fd.
-    Args :
-      if fd == stdin, launch interactive mode (AKA display prompt and wait for
-        user input).
-      else, read from fd.
-    Return :
-      
-      */
-char* get_input(FILE* fd);
+// get_input retrieves the user input from fd.
+// if fd == stdin, it launches the interactive mode (aka. display prompt and
+// wait for user input).
+// Otherwise it reads from given file.
+// Returns a string with the entered line.
+char *get_input(FILE *file);
 
 #endif
