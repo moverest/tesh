@@ -1,3 +1,3 @@
-echo Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. > /tmp/TMPFILE
+echo Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. > tmp2
 echo sortie de echo
-cat /tmp/TMPFILE
+cat tmp2

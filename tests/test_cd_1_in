@@ -1,5 +1,5 @@
-cd /vagrant/fixtures
-cd d2
-cd d2.1
+cd test1/test2
+cd test3
+cd test3.1/
 pwd
 ls
