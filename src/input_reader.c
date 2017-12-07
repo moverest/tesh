@@ -4,6 +4,7 @@
 #include <errno.h>
 #include <pwd.h>
 #include <unistd.h>
+#include <stdbool.h>
 
 #include "vector.h"
 
@@ -44,7 +45,7 @@ char *get_prompt() {
 }
 
 
-char *get_input(FILE *file) {
+char *get_input(FILE *file, bool *at_eof) {
     int      current_char;
     vector_t *line_vector = make_vector_with_cap(sizeof(char),
                                                  INPUT_DEFAULT_CAP);
@@ -59,6 +60,10 @@ char *get_input(FILE *file) {
         free(prompt);
     }
 
+    if (at_eof != NULL) {
+        *at_eof = false;
+    }
+
     while ((current_char = getc(file)) != EOF) {
         vector_append(line_vector, &current_char);
         if (current_char == '\n') {
@@ -66,9 +71,17 @@ char *get_input(FILE *file) {
         }
     }
 
-    /*if (current_char == EOF){
-     * vector_append(line_vector, &current_char);
-     * }*/
+
+
+    if (current_char == EOF) {
+        if (at_eof != NULL) {
+            *at_eof = true;
+        }
+    }
+
+
+    current_char = 0;
+    vector_append(line_vector, &current_char);
 
     return (char *)vector_extract_buffer(line_vector);
 }
