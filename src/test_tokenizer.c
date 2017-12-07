@@ -41,12 +41,14 @@ static void test_tokenizer_1(test_t *t) {
             puts("");
             test_fail(t);
         }
-        free(token_temp);
+        token_free(token_temp);
     }
 
     for (size_t i = 0; i < ARRAY_LEN(expected_tokens); i++) {
         token_free(expected_tokens[i]);
     }
+
+    tokenizer_free(tokenizer);
 }
 
 
