@@ -37,3 +37,7 @@
  *
  *  return test_run(tests, ARRAY_LEN(tests));
  * }*/
+
+int main(){
+  return 0;
+}
