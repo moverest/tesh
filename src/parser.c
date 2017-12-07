@@ -293,12 +293,12 @@ int exec_statement(statement_t *statement, int *status) {
               if(statement->redirect_out_file!=NULL){
                 int fd_out;
                 if(statement->redirect_append){
-                   fd_out = open(statement->redirect_out_file, O_WRONLY | O_CREAT | O_APPEND);
+                   fd_out = open(statement->redirect_out_file, O_WRONLY | O_CREAT | O_APPEND, 0644 );
                 } else {
-                   fd_out = open(statement->redirect_out_file, O_WRONLY | O_CREAT | O_TRUNC);
+                   fd_out = open(statement->redirect_out_file, O_WRONLY | O_CREAT | O_TRUNC, 0644);
                 }
                 if(fd_out==-1){
-                  perror("Error opening redirect out file.");
+                  perror("Error opening redirect out file ");
                   return 1;
                 }
 
@@ -315,7 +315,7 @@ int exec_statement(statement_t *statement, int *status) {
                 int fd_in = open(statement->redirect_in_file, O_RDONLY);
 
                 if(fd_in==-1){
-                  perror("Error opening redirect in file.");
+                  perror("Error opening redirect in file ");
                   return 1;
                 }
 
