@@ -29,8 +29,8 @@ $(BUILD_DIR)/test_parser: $(foreach f, parser.o test.o vector.o tokenizer.o, $(B
 $(BUILD_DIR)/test_vector: $(BUILD_DIR)/vector.o $(BUILD_DIR)/test.o
 $(BUILD_DIR)/test: $(SRC_DIR)/test.h
 
-tesh: run
-	cp run tesh
+tesh: $(BUILD_DIR)/tesh
+	cp $(BUILD_DIR)/tesh tesh
 
 $(BUILD_DIR)/%: $(BUILD_DIR)/%.o
 	$(CC) -o $@ $(filter %.o, $^) $(LD_FLAGS)

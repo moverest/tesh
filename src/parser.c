@@ -207,12 +207,16 @@ statement_t *parser_statement(parser_t *p) {
 
 
 compound_statement_t *parser_compound(parser_t *p) {
-    if (p->current_token->type == TOKEN_END) {
+    while (p->current_token->type == TOKEN_END) {
+        token_free(p->current_token);
+        p->current_token = tokenizer_next(p->tokenizer);
+    }
+
+    if (p->current_token->type == TOKEN_EOF) {
         // We have reach the end of the buffer.
         // There are no more statement to parse.
         return NULL;
     }
-
 
     compound_statement_t *current_compound = new_compound();
     vector_t             *statements       = make_vector(sizeof(statement_t *));
@@ -226,7 +230,6 @@ compound_statement_t *parser_compound(parser_t *p) {
     vector_append(statements, &cs);
 
     while (p->current_token->type != TOKEN_END &&
-           p->current_token->type != TOKEN_NEXT &&
            p->current_token->type != TOKEN_BG &&
            p->current_token->type != TOKEN_EOF) {
         cs = parser_statement(p);
