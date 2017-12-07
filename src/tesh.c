@@ -1,40 +1,24 @@
 #include <stdio.h>
+#include <stdbool.h>
 
 #include "parser.h"
 #include "input_reader.h"
 
 int main() {
-    char     *buffer = get_input(stdin);
-    parser_t *parser = new_parser(buffer);
+    char     *buffer;
+    parser_t *parser;
+    int      status_code = 0;
+    bool     at_eof      = false;
 
-    while (parser->current_token->type != TOKEN_EOF) {
-        compound_statement_t *current_compound = parser_compound(parser);
-        //print_compound(current_compound);
-        if (current_compound == NULL) {
-            perror("Fail to parse buffer.\n");
-            free(buffer);
-            parser_free(parser);
-            return 1;
+    do {
+        buffer = get_input(stdin, &at_eof);
+        parser = new_parser(buffer);
+
+        compound_statement_t *cstatement;
+        while ((cstatement = parser_compound(parser)) != NULL) {
+            status_code = exec_compound(cstatement);
+            free(cstatement);
         }
-        exec_compound(current_compound);
-        free_compound(current_compound);
-
-        if (parser->current_token->type != TOKEN_NEXT) {
-            free(buffer);
-            parser_free(parser);
-            // Execution succeed (or not), so we go on
-            buffer = get_input(stdin);
-            //printf("Da buffer : %s(EOL)\n", buffer);
-            parser = new_parser(buffer);
-        } else {
-            // current_token->type == TOKEN_NEXT. On avance d'un token, et on
-            // laisse la boucle exec la suite :)
-            free(parser->current_token);
-            parser->current_token = tokenizer_next(parser->tokenizer);
-        }
-    }
-    free(buffer);
-    parser_free(parser);
-
-    return 0;
+    } while (!at_eof);
+    return status_code;
 }

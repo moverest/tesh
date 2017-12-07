@@ -207,6 +207,13 @@ statement_t *parser_statement(parser_t *p) {
 
 
 compound_statement_t *parser_compound(parser_t *p) {
+    if (p->current_token->type == TOKEN_END) {
+        // We have reach the end of the buffer.
+        // There are no more statement to parse.
+        return NULL;
+    }
+
+
     compound_statement_t *current_compound = new_compound();
     vector_t             *statements       = make_vector(sizeof(statement_t *));
     statement_t          *cs;
@@ -235,14 +242,16 @@ compound_statement_t *parser_compound(parser_t *p) {
     }
 
     current_compound->num_statements = statements->size;
-    current_compound->statements     = (statement_t **)vector_extract_buffer(statements);
+    current_compound->statements     = (statement_t **)
+                                       vector_extract_buffer(statements);
 
     return current_compound;
 }
 
 
 compound_statement_t *new_compound() {
-    compound_statement_t *statements = (compound_statement_t *)malloc(sizeof(compound_statement_t));
+    compound_statement_t *statements = (compound_statement_t *)
+                                       malloc(sizeof(compound_statement_t));
 
     statements->bg             = false;
     statements->num_statements = 0;
@@ -358,7 +367,6 @@ int exec_compound(compound_statement_t *cstatement) {
         }
 
         last_status_code = WEXITSTATUS(status);
-        //printf("parser.c:320\tCode de retour : %d\n", last_status_code);
         bool go_on = cstatement->statements[i]->go_on_condition;
         if (!(((go_on == GO_ON_IF_SUCCESS) && (last_status_code == 0)) ||
               ((go_on == GO_ON_IF_FAILURE) && (last_status_code != 0)))) {
