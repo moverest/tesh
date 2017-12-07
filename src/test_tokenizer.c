@@ -25,7 +25,7 @@ static void test_tokenizer_1(test_t *t) {
         new_token(TOKEN_AND,    NULL,   0),
         new_token(TOKEN_STRING, "echo", 4),
         new_token(TOKEN_STRING, "2",    1),
-        new_token(TOKEN_NEXT,   NULL,   0)
+        new_token(TOKEN_END,    NULL,   0)
     };
 
 

@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 echo Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. > tmp-lorem
 for i in tests/*_in; do
   ./tesh < $i > tmp
