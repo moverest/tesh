@@ -24,16 +24,15 @@ void free_command(command_t *cmd) {
 
 
 void free_statement(statement_t *st) {
-
     for (size_t i = 0; i < st->num_commands; i++) {
         free_command(st->cmds[i]);
     }
 
-    if(st->redirect_in_file != NULL){
-      free(st->redirect_in_file);
+    if (st->redirect_in_file != NULL) {
+        free(st->redirect_in_file);
     }
-    if(st->redirect_out_file != NULL){
-      free(st->redirect_out_file);
+    if (st->redirect_out_file != NULL) {
+        free(st->redirect_out_file);
     }
     free(st);
 }
@@ -86,8 +85,8 @@ parser_t *new_parser(char *s) {
     parser_t *parser = (parser_t *)malloc(sizeof(parser_t));
 
     if (parser == NULL) {
-      perror("Error while initializing parser.");
-      return NULL;
+        perror("Error while initializing parser.");
+        return NULL;
     }
 
     parser->tokenizer     = new_tokenizer(s);
@@ -99,7 +98,7 @@ parser_t *new_parser(char *s) {
 
 void parser_free(parser_t *parser) {
     if (parser == NULL) {
-      perror("Error while freeing parser.");
+        perror("Error while freeing parser.");
         return;
     }
 
@@ -117,9 +116,9 @@ command_t *parser_cmd(parser_t *parser) {
     vector_t *argv = make_vector(sizeof(char *));
 
     //TODO errors (if current_token->type != string)
-    if(parser->current_token->type != TOKEN_STRING){
-      perror("Error while parsing a cmd. First token's type is not string.");
-      return NULL;
+    if (parser->current_token->type != TOKEN_STRING) {
+        perror("Error while parsing a cmd. First token's type is not string.");
+        return NULL;
     }
 
     while (parser->current_token->type == TOKEN_STRING) {
@@ -141,9 +140,9 @@ statement_t *parser_statement(parser_t *p) {
 
     command_t *current_command = parser_cmd(p);
 
-    if(current_command == NULL){
-      perror ("There was an error while computing commande");
-      return NULL;
+    if (current_command == NULL) {
+        perror("There was an error while computing commande");
+        return NULL;
     }
 
     vector_append(cmds, &current_command); //TODO errors
@@ -151,9 +150,9 @@ statement_t *parser_statement(parser_t *p) {
     if (p->current_token->type == TOKEN_REDIRECT_IN) {
         token_free(p->current_token);
         p->current_token = tokenizer_next(p->tokenizer);   //TODO errors
-        if(p->current_token->type != TOKEN_STRING){
-          perror("Error while parsing a redirection. First next token's type is not string.");
-          return NULL;
+        if (p->current_token->type != TOKEN_STRING) {
+            perror("Error while parsing a redirection. First next token's type is not string.");
+            return NULL;
         }
         current_statement->redirect_in_file = token_extract(p->current_token);
         p->current_token = tokenizer_next(p->tokenizer);
@@ -163,9 +162,9 @@ statement_t *parser_statement(parser_t *p) {
         token_free(p->current_token);
         p->current_token = tokenizer_next(p->tokenizer); //TODO errors
         current_command  = parser_cmd(p);
-        if(current_command == NULL){
-          perror ("There was an error while computing commande");
-          return NULL;
+        if (current_command == NULL) {
+            perror("There was an error while computing commande");
+            return NULL;
         }
         vector_append(cmds, &current_command);           //TODO errors
     }
@@ -176,9 +175,9 @@ statement_t *parser_statement(parser_t *p) {
         current_statement->redirect_append = append;
         token_free(p->current_token);
         p->current_token = tokenizer_next(p->tokenizer); //TODO errors
-        if(p->current_token->type != TOKEN_STRING){
-          perror("Error while parsing a redirection. First next token's type is not string.");
-          return NULL;
+        if (p->current_token->type != TOKEN_STRING) {
+            perror("Error while parsing a redirection. First next token's type is not string.");
+            return NULL;
         }
         current_statement->redirect_out_file = token_extract(p->current_token);
         p->current_token = tokenizer_next(p->tokenizer);
@@ -214,9 +213,9 @@ compound_statement_t *parser_compound(parser_t *p) {
     statement_t          *cs;
 
     cs = parser_statement(p); //TODO errors
-    if(cs == NULL){
-      perror ("There was an error while computing statement");
-      return NULL;
+    if (cs == NULL) {
+        perror("There was an error while computing statement");
+        return NULL;
     }
     vector_append(statements, &cs);
 
@@ -225,9 +224,9 @@ compound_statement_t *parser_compound(parser_t *p) {
            p->current_token->type != TOKEN_BG &&
            p->current_token->type != TOKEN_EOF) {
         cs = parser_statement(p); //TODO errors
-        if(cs == NULL){
-          perror ("There was an error while computing statement");
-          return NULL;
+        if (cs == NULL) {
+            perror("There was an error while computing statement");
+            return NULL;
         }
         vector_append(statements, &cs);
     }
@@ -255,19 +254,20 @@ compound_statement_t *new_compound() {
 statement_t *new_statement() {
     statement_t *statement = (statement_t *)malloc(sizeof(statement_t));
 
-    statement->redirect_append = false;
-    statement->num_commands    = 0;
-    statement->redirect_in_file = NULL;
+    statement->redirect_append   = false;
+    statement->num_commands      = 0;
+    statement->redirect_in_file  = NULL;
     statement->redirect_out_file = NULL;
-    statement->go_on_condition = GO_ON_NEVER;
+    statement->go_on_condition   = GO_ON_NEVER;
 
     return statement;
 }
 
+
 int exec_statement(statement_t *statement, int *status) {
     int pd_in[2], pd_out[2];
 
-    pid_t *pids = (pid_t*)malloc(sizeof(pid_t) * statement->num_commands);
+    pid_t *pids = (pid_t *)malloc(sizeof(pid_t) * statement->num_commands);
 
     if (pids == NULL) {
         return 1;
@@ -289,39 +289,39 @@ int exec_statement(statement_t *statement, int *status) {
                 close(pd_out[0]);
                 close(pd_out[1]);
             } else {
-              // It is indeed the last command, we should redirect output.
-              if(statement->redirect_out_file!=NULL){
-                int fd_out;
-                if(statement->redirect_append){
-                   fd_out = open(statement->redirect_out_file, O_WRONLY | O_CREAT | O_APPEND, 0644 );
-                } else {
-                   fd_out = open(statement->redirect_out_file, O_WRONLY | O_CREAT | O_TRUNC, 0644);
-                }
-                if(fd_out==-1){
-                  perror("Error opening redirect out file ");
-                  return 1;
-                }
+                // It is indeed the last command, we should redirect output.
+                if (statement->redirect_out_file != NULL) {
+                    int fd_out;
+                    if (statement->redirect_append) {
+                        fd_out = open(statement->redirect_out_file, O_WRONLY | O_CREAT | O_APPEND, 0644);
+                    } else {
+                        fd_out = open(statement->redirect_out_file, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+                    }
+                    if (fd_out == -1) {
+                        perror("Error opening redirect out file ");
+                        return 1;
+                    }
 
-                dup2(fd_out, 1);
-                close(fd_out);
-              }
+                    dup2(fd_out, 1);
+                    close(fd_out);
+                }
             }
 
             if (!IS_FIRST_CMD(i)) {
                 dup2(pd_in[0], 0);
                 close(pd_in[0]);
             } else {
-              if(statement->redirect_in_file!=NULL){
-                int fd_in = open(statement->redirect_in_file, O_RDONLY);
+                if (statement->redirect_in_file != NULL) {
+                    int fd_in = open(statement->redirect_in_file, O_RDONLY);
 
-                if(fd_in==-1){
-                  perror("Error opening redirect in file ");
-                  return 1;
+                    if (fd_in == -1) {
+                        perror("Error opening redirect in file ");
+                        return 1;
+                    }
+
+                    dup2(fd_in, 0);
+                    close(fd_in);
                 }
-
-                dup2(fd_in, 0);
-                close(fd_in);
-              }
             }
 
             execvp(statement->cmds[i]->argv[0], statement->cmds[i]->argv);
@@ -360,9 +360,9 @@ int exec_compound(compound_statement_t *cstatement) {
 
         last_status_code = WEXITSTATUS(status);
         //printf("parser.c:320\tCode de retour : %d\n", last_status_code);
-        bool go_on = cstatement->statements[i]->go_on_condition ;
+        bool go_on = cstatement->statements[i]->go_on_condition;
         if (!(((go_on == GO_ON_IF_SUCCESS) && (last_status_code == 0)) ||
-            ((go_on == GO_ON_IF_FAILURE) && (last_status_code != 0)))) {
+              ((go_on == GO_ON_IF_FAILURE) && (last_status_code != 0)))) {
             i++;
         }
     }

@@ -42,6 +42,7 @@ token_t *tokenizer_next(tokenizer_t *tokenizer) {
         incr  = 1;
         token = new_token(TOKEN_NEXT, NULL, 0);
         break;
+
     case '\n':
         token = new_token(TOKEN_END, NULL, 0);
         break;
