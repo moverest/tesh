@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include <string.h>
 
-// Lexer
 
 tokenizer_t *new_tokenizer(char *buf) {
     tokenizer_t *tokenizer = (tokenizer_t *)malloc(sizeof(tokenizer_t));
@@ -130,6 +129,10 @@ char *token_extract(token_t *token) {
 
 
 void token_free(token_t *token) {
+    if (token == NULL) {
+        return;
+    }
+
     if (token->str != NULL) {
         free(token->str);
     }
