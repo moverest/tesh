@@ -1,5 +1,0 @@
-cat /vagrant/fixtures/redir/lorem-ipsum > tmp
-cat /vagrant/fixtures/redir/lorem-ipsum > tmp
-cat /vagrant/fixtures/redir/lorem-ipsum >> tmp
-echo sortie de echo
-cat tmp

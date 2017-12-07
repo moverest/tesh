@@ -12,6 +12,7 @@ typedef enum {
     TOKEN_OR,
     TOKEN_PIPE,
     TOKEN_END,
+    TOKEN_NEXT,
     TOKEN_BG,
     TOKEN_EOF
 } token_type_t;
