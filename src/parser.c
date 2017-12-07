@@ -5,6 +5,8 @@
 #include <sys/wait.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <error.h>
+#include <errno.h>
 
 
 #include "parser.h"
@@ -300,13 +302,14 @@ int exec_statement(statement_t *statement, int *status) {
                 close(pd_out[0]);
                 close(pd_out[1]);
             } else {
-                // It is indeed the last command, we should redirect output.
                 if (statement->redirect_out_file != NULL) {
                     int fd_out;
                     if (statement->redirect_append) {
-                        fd_out = open(statement->redirect_out_file, O_WRONLY | O_CREAT | O_APPEND, 0644);
+                        fd_out = open(statement->redirect_out_file,
+                                      O_WRONLY | O_CREAT | O_APPEND, 0644);
                     } else {
-                        fd_out = open(statement->redirect_out_file, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+                        fd_out = open(statement->redirect_out_file,
+                                      O_WRONLY | O_CREAT | O_TRUNC, 0644);
                     }
                     if (fd_out == -1) {
                         perror("Error opening redirect out file ");
@@ -334,10 +337,14 @@ int exec_statement(statement_t *statement, int *status) {
                     close(fd_in);
                 }
             }
-
-            execvp(statement->cmds[i]->argv[0], statement->cmds[i]->argv);
-            // TODO: Handle errors
-            exit(1);
+            int err = execvp(statement->cmds[i]->argv[0],
+                             statement->cmds[i]->argv);
+            if (err) {
+                int error_num = errno;
+                error(1, error_num, "error while starting '%s'",
+                      statement->cmds[i]->argv[0]);
+            }
+            exit(2);
         }
 
         if (!IS_LAST_CMD(i)) {
