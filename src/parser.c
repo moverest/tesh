@@ -115,7 +115,6 @@ void parser_free(parser_t *parser) {
 command_t *parser_cmd(parser_t *parser) {
     vector_t *argv = make_vector(sizeof(char *));
 
-    //TODO errors (if current_token->type != string)
     if (parser->current_token->type != TOKEN_STRING) {
         perror("Error while parsing a cmd. First token's type is not string.");
         return NULL;
@@ -149,7 +148,7 @@ statement_t *parser_statement(parser_t *p) {
 
     if (p->current_token->type == TOKEN_REDIRECT_IN) {
         token_free(p->current_token);
-        p->current_token = tokenizer_next(p->tokenizer);   //TODO errors
+        p->current_token = tokenizer_next(p->tokenizer);
         if (p->current_token->type != TOKEN_STRING) {
             perror("Error while parsing a redirection. First next token's type is not string.");
             return NULL;
@@ -160,13 +159,13 @@ statement_t *parser_statement(parser_t *p) {
 
     while (p->current_token->type == TOKEN_PIPE) {
         token_free(p->current_token);
-        p->current_token = tokenizer_next(p->tokenizer); //TODO errors
+        p->current_token = tokenizer_next(p->tokenizer);
         current_command  = parser_cmd(p);
         if (current_command == NULL) {
             perror("There was an error while computing commande");
             return NULL;
         }
-        vector_append(cmds, &current_command);           //TODO errors
+        vector_append(cmds, &current_command); //TODO errors
     }
 
     bool append;
@@ -174,7 +173,7 @@ statement_t *parser_statement(parser_t *p) {
         (p->current_token->type == TOKEN_REDIRECT_OUT)) {
         current_statement->redirect_append = append;
         token_free(p->current_token);
-        p->current_token = tokenizer_next(p->tokenizer); //TODO errors
+        p->current_token = tokenizer_next(p->tokenizer);
         if (p->current_token->type != TOKEN_STRING) {
             perror("Error while parsing a redirection. First next token's type is not string.");
             return NULL;
@@ -212,7 +211,7 @@ compound_statement_t *parser_compound(parser_t *p) {
     vector_t             *statements       = make_vector(sizeof(statement_t *));
     statement_t          *cs;
 
-    cs = parser_statement(p); //TODO errors
+    cs = parser_statement(p);
     if (cs == NULL) {
         perror("There was an error while computing statement");
         return NULL;
@@ -223,7 +222,7 @@ compound_statement_t *parser_compound(parser_t *p) {
            p->current_token->type != TOKEN_NEXT &&
            p->current_token->type != TOKEN_BG &&
            p->current_token->type != TOKEN_EOF) {
-        cs = parser_statement(p); //TODO errors
+        cs = parser_statement(p);
         if (cs == NULL) {
             perror("There was an error while computing statement");
             return NULL;

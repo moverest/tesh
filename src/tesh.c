@@ -33,7 +33,7 @@ int main() {
             parser->current_token = tokenizer_next(parser->tokenizer);
         }
     }
-
+    free(buffer);
     parser_free(parser);
 
     return 0;
