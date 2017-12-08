@@ -32,10 +32,6 @@ typedef struct {
 } compound_statement_t;
 
 typedef struct {
-    int fd[2];
-} pipe_t;
-
-typedef struct {
     tokenizer_t *tokenizer;
     token_t     *current_token;
 } parser_t;
