@@ -1,9 +1,41 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <dlfcn.h>
+#include <string.h>
 
 #include "parser.h"
 #include "input_reader.h"
+
+int update_flags(int argc, char const* argv[], FILE** fdIn, bool* SCRIPTMOD, bool* READLINEMOD, bool* ERRORMOD){
+  int error;
+  for(int i = 1; i < argc; i++){
+    if(argv[i]!=NULL){
+      if (strlen(argv[i])>=2 && argv[i][0] == '-'){
+        if (strlen(argv[i])==2 && argv[i][1] == 'r'){
+          //printf("MODE READLINE\n");
+          *READLINEMOD = true;
+          error += 1;
+        } else if (strlen(argv[i])==2 && argv[i][1] == 'e') {
+          //printf("MODE QUIT_ON_ERROR\n");
+          *ERRORMOD = true;
+          error += 2;
+        } else {
+          printf("NOT RECOGNIZED OPTION GIVEN.\n");
+          error-=999;
+        }
+      } else {
+        //printf("MODE READ FROM SCRIPT FILE\n");
+        *SCRIPTMOD = true;
+        *fdIn = fopen(argv[i], "r");
+        error += 4 ;
+      }
+    } else {
+      printf("NOT RECOGNIZED ARG GIVEN.\n");
+      error-=999;
+    }
+  }
+  return error ;
+}
 
 int main(int argc, char const *argv[]) {
     char *(*readline)(char *);
@@ -12,17 +44,18 @@ int main(int argc, char const *argv[]) {
     FILE* fdIn = stdin ;
     bool READLINEMOD = false ;
     bool ERRORMOD = false ;
+    bool SCRIPTMOD = false ;
+    int err = 0 ;
 
-    if (argc == 2){
-      if (argv[1] != NULL && argv[1][0] == '-'){
-        if (argv[1] != NULL && argv[1][1] == 'r'){
-          READLINEMOD = true;
-        } else if (argv[1] != NULL && argv[1][1] == 'e') {
-          ERRORMOD = true;
-        }
-      } else {
-        fdIn = fopen(argv[1], "r");
-      }
+    err = update_flags(argc, argv, &fdIn, &SCRIPTMOD, &READLINEMOD, &ERRORMOD);
+    if(err<0){
+      printf("ERROR WHILE PARSING ARGV\n");
+      return -1;
+    }
+
+    if(READLINEMOD && SCRIPTMOD){
+      printf("ERROR : CAN'T READ BOTH FROM SCRIPT AND READLINE INPUT\n");
+      return -1;
     }
 
     if (READLINEMOD) {
@@ -59,6 +92,12 @@ int main(int argc, char const *argv[]) {
             status_code = exec_compound(cstatement);
             free(cstatement);
         }
+        free(buffer);
     } while (!at_eof);
+
+    if(SCRIPTMOD){
+      fclose(fdIn);
+    }
+
     return status_code;
 }
