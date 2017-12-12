@@ -50,7 +50,7 @@ char *get_input(FILE *file, bool *at_eof) {
     vector_t *line_vector = make_vector_with_cap(sizeof(char),
                                                  INPUT_DEFAULT_CAP);
 
-    if (isatty(0)) {
+    if (isatty(0) && file == stdin) {
         char *prompt = get_prompt();
         if (prompt == NULL) {
             perror("Error while computing prompt");
