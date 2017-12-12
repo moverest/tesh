@@ -17,8 +17,11 @@ int main() {
         compound_statement_t *cstatement;
         while ((cstatement = parser_compound(parser)) != NULL) {
             status_code = exec_compound(cstatement);
-            free(cstatement);
+            free_compound(cstatement);
         }
+
+        free(buffer);
+        parser_free(parser);
     } while (!at_eof);
     return status_code;
 }
