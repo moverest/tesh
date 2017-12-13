@@ -53,7 +53,7 @@ int main(int argc, char const *argv[]) {
       return -1;
     }
 
-    if(READLINEMOD && SCRIPTMOD){
+    if(READLINEMOD && !isatty(0)){
       printf("ERROR : CAN'T READ BOTH FROM SCRIPT AND READLINE INPUT\n");
       return -1;
     }
