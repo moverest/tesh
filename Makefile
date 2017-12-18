@@ -1,7 +1,7 @@
 BUILD_DIR = build
 SRC_DIR = src
 
-CFLAGS = -Wall -std=gnu99
+CFLAGS = -Wall -std=gnu99 -ldl
 CFLAGS_DEBUG = -g -DDEBUG
 CC = gcc $(CFLAGS)
 
