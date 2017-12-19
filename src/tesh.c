@@ -21,7 +21,7 @@ int update_flags(int argc, char const *argv[], FILE **fdIn, bool *SCRIPTMOD, boo
                     *ERRORMOD = true;
                     error    += 2;
                 } else {
-                    printf("NOT RECOGNIZED OPTION GIVEN.\n");
+                    printf("NOT RECOGNIZED GIVEN OPTION.\n");
                     error -= 999;
                 }
             } else {
@@ -81,6 +81,10 @@ int main(int argc, char const *argv[]) {
     do {
         if (READLINEMOD) {
             buffer = readline(get_prompt());
+            if (buffer == NULL) {
+                // User send Ctrl-D
+                return 0;
+            }
             if (buffer[0] != 0) {
                 add_history(buffer);
             }
