@@ -96,7 +96,7 @@ int main(int argc, char const *argv[]) {
 
         compound_statement_t *cstatement;
         while ((cstatement = parser_compound(parser)) != NULL) {
-            status_code = exec_compound(cstatement);
+            status_code = exec_compound(cstatement, ERRORMOD);
             free_compound(cstatement);
         }
 
