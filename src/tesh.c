@@ -80,12 +80,16 @@ int main(int argc, char const *argv[]) {
 
     do {
         if (READLINEMOD) {
+            //fflush(stdin);
             buffer = readline(get_prompt());
             if (buffer == NULL) {
                 // User send Ctrl-D
                 return 0;
             }
-            //printf("tesh.c:89 da buffer : %s\\0\n", buffer);
+            printf("tesh.c:89 da buffer : %s\\0\n", buffer);
+            printf("tesh.c:89 last char : %d\n", buffer[strlen(buffer)] == '\0');
+            buffer[strlen(buffer)] = '\0';
+            printf("tesh.c:89 strlen : %ld\n", strlen(buffer));
             if (buffer[0] != 0) {
                 add_history(buffer);
             }
