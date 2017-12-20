@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <string.h>
+#include <sys/wait.h>
+#include <sys/types.h>
 #include "built_in.h"
 
 #define BUILT_IN_NUMBER    3
@@ -73,6 +75,20 @@ int build_in_ex(command_t *cmd) {
 
 
 int build_in_fg(command_t *cmd) {
-    NULL;
+    int   status;
+    pid_t pid_to_wait;
+
+    if (cmd->argv[1] == NULL) {
+        pid_to_wait = wait(&status);
+    } else {
+        pid_to_wait = (pid_t)atoi(cmd->argv[1]);
+        pid_to_wait = waitpid(pid_to_wait, &status, 0);
+    }
+    if (pid_to_wait == -1) {
+        perror("wait failed");
+        return -1;
+    }
+    int exit_status = WEXITSTATUS(status);
+    printf("[%d->%d]\n", pid_to_wait, exit_status);
     return 0;
 }

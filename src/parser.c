@@ -120,6 +120,7 @@ command_t *parser_cmd(parser_t *parser) {
     vector_t *argv = make_vector(sizeof(char *));
 
     if (parser->current_token->type != TOKEN_STRING) {
+        printf("type : %d\n", parser->current_token->type);
         perror("Error while parsing a cmd. First token's type is not string.");
         return NULL;
     }
@@ -246,6 +247,8 @@ compound_statement_t *parser_compound(parser_t *p) {
 
     if (p->current_token->type == TOKEN_BG) {
         current_compound->bg = true;
+        token_free(p->current_token);
+        p->current_token = tokenizer_next(p->tokenizer);
     }
 
     current_compound->num_statements = statements->size;
@@ -279,7 +282,7 @@ statement_t *new_statement() {
 }
 
 
-int exec_statement(statement_t *statement, int *status) {
+int exec_statement(statement_t *statement, int *status, bool bg_mod) {
     int pd_in[2], pd_out[2];
 
 
@@ -371,10 +374,13 @@ int exec_statement(statement_t *statement, int *status) {
             pids[i] = child_pid;
         }
     }
-
-    for (size_t i = 0; i < statement->num_commands; i++) {
-        if (pids[i] != -1) {
-            waitpid(pids[i], status, 0);
+    if (bg_mod) {
+        printf("[%d]\n", pids[(statement->num_commands) - 1]);
+    } else {
+        for (size_t i = 0; i < statement->num_commands; i++) {
+            if (pids[i] != -1) {
+                waitpid(pids[i], status, 0);
+            }
         }
     }
 
@@ -387,7 +393,7 @@ int exec_compound(compound_statement_t *cstatement) {
 
     for (size_t i = 0; i < cstatement->num_statements; i++) {
         int status;
-        int err = exec_statement(cstatement->statements[i], &status);
+        int err = exec_statement(cstatement->statements[i], &status, cstatement->bg);
         if (err) {
             return err + 100;
         }
