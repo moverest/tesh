@@ -93,6 +93,9 @@ parser_t *new_parser(char *s) {
 
     parser->tokenizer     = new_tokenizer(s);
     parser->current_token = tokenizer_next(parser->tokenizer);
+    if (parser->current_token == NULL) {
+        return NULL;
+    }
 
     return parser;
 }
@@ -126,6 +129,9 @@ command_t *parser_cmd(parser_t *parser) {
         char *str = token_extract(parser->current_token);
         vector_append(argv, &str);
         parser->current_token = tokenizer_next(parser->tokenizer);
+        if (parser->current_token == NULL) {
+            return NULL;
+        }
     }
 
     command_t *cmd = (command_t *)malloc(sizeof(command_t));
@@ -157,12 +163,18 @@ statement_t *parser_statement(parser_t *p) {
         }
         current_statement->redirect_in_file = token_extract(p->current_token);
         p->current_token = tokenizer_next(p->tokenizer);
+        if (p->current_token == NULL) {
+            return NULL;
+        }
     }
 
     while (p->current_token->type == TOKEN_PIPE) {
         token_free(p->current_token);
         p->current_token = tokenizer_next(p->tokenizer);
-        current_command  = parser_cmd(p);
+        if (p->current_token == NULL) {
+            return NULL;
+        }
+        current_command = parser_cmd(p);
         if (current_command == NULL) {
             perror("There was an error while computing commande");
             return NULL;
@@ -176,12 +188,18 @@ statement_t *parser_statement(parser_t *p) {
         current_statement->redirect_append = append;
         token_free(p->current_token);
         p->current_token = tokenizer_next(p->tokenizer);
+        if (p->current_token == NULL) {
+            return NULL;
+        }
         if (p->current_token->type != TOKEN_STRING) {
             perror("Error while parsing a redirection. First next token's type is not string.");
             return NULL;
         }
         current_statement->redirect_out_file = token_extract(p->current_token);
         p->current_token = tokenizer_next(p->tokenizer);
+        if (p->current_token == NULL) {
+            return NULL;
+        }
     }
 
     // After a list of commands, there is a &&, || or ;
@@ -189,11 +207,17 @@ statement_t *parser_statement(parser_t *p) {
     case TOKEN_AND:
         current_statement->go_on_condition = GO_ON_IF_SUCCESS;
         p->current_token = tokenizer_next(p->tokenizer);
+        if (p->current_token == NULL) {
+            return NULL;
+        }
         break;
 
     case TOKEN_OR:
         current_statement->go_on_condition = GO_ON_IF_FAILURE;
         p->current_token = tokenizer_next(p->tokenizer);
+        if (p->current_token == NULL) {
+            return NULL;
+        }
         break;
 
     default:
@@ -212,6 +236,9 @@ compound_statement_t *parser_compound(parser_t *p) {
     while (p->current_token->type == TOKEN_END) {
         token_free(p->current_token);
         p->current_token = tokenizer_next(p->tokenizer);
+        if (p->current_token == NULL) {
+            return NULL;
+        }
     }
 
     if (p->current_token->type == TOKEN_EOF) {
