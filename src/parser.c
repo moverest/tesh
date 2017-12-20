@@ -20,7 +20,7 @@
 
 void free_command(command_t *cmd) {
     for (size_t i = 0; cmd->argv[i] != NULL; i++) {
-        printf("freeing '%s' @ id = %ld\n", cmd->argv[i], i);
+        //printf("freeing '%s' @ id = %ld\n", cmd->argv[i], i);
         free(cmd->argv[i]);
     }
     if (cmd->argv != NULL) {
