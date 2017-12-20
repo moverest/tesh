@@ -377,36 +377,17 @@ int exec_compound(compound_statement_t *cstatement) {
         }
 
         last_status_code = WEXITSTATUS(status);
+        go_on_condition_t go_on = cstatement->statements[i]->go_on_condition;
 
-        // CE TRUC EST FAUX
-        // SI ON LUI FILE false && echo a && echo b, on affiche b,
-        // alors qu'on est pas sensé
-
-        // DONC EN VRAI FAUT FAIRE UNE BOUCLE. ON A LA GO ON CDT,
-        // ET IL FAUT JUSTE SAUTé JUSQU'A LA PROCHAINE GO ON CONDITION DIFF
-
-
-        go_on_condition_t go_on   = cstatement->statements[i]->go_on_condition;
-        bool              val_ret = (last_status_code == 0);
-
-        // On recommence calmement :
-        // Si on a false, et que c'est un &&, on va au prochain ou
-        if ((val_ret == false) && (go_on == GO_ON_IF_SUCCESS)) {
+        if ((last_status_code != 0) && (go_on == GO_ON_IF_SUCCESS)) {
             while (i < cstatement->num_statements && cstatement->statements[i]->go_on_condition == GO_ON_IF_SUCCESS) {
                 i++;
             }
-        } else if ((val_ret == true) && (go_on == GO_ON_IF_FAILURE)) {
+        } else if ((last_status_code == 0) && (go_on == GO_ON_IF_FAILURE)) {
             while (i < cstatement->num_statements && cstatement->statements[i]->go_on_condition == GO_ON_IF_FAILURE) {
                 i++;
             }
         }
-
-        /*
-         *
-         * if (!(((go_on == GO_ON_IF_SUCCESS) && (last_status_code == 0)) ||
-         *    ((go_on == GO_ON_IF_FAILURE) && (last_status_code != 0)))) {
-         *  i++;
-         * }*/
     }
 
     return 0;
