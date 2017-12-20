@@ -1,46 +1,74 @@
 #include <stdio.h>
+#include <string.h>
 #include "built_in.h"
 
-built_ins_t *get_built_ins() {
-    built_in_t *built_ins = (built_in_t *)malloc(sizeof(built_in_t) * 3);
+#define BUILT_IN_NUMBER    3
 
-    built_ins[0] = { "cd", build_in_cd };
-    built_ins[1] = { "fg", build_in_fg };
-    built_ins[2] = { "ex", build_in_ex };
+built_ins_t *get_built_ins() {
+    built_in_t *built_ins = (built_in_t *)malloc(sizeof(built_in_t) * BUILT_IN_NUMBER);
+
+    built_ins[0] = (built_in_t){
+        "cd", &build_in_cd
+    };
+    built_ins[1] = (built_in_t){
+        "fg", &build_in_fg
+    };
+    built_ins[2] = (built_in_t){
+        "exit", &build_in_ex
+    };
 
 
     built_ins_t *bi = (built_ins_t *)malloc(sizeof(built_ins_t));
     bi->built_in = built_ins;
 
-    /* = {
-     *  {"cd", build_in_cd},
-     *  {"ex", build_in_ex},
-     *  {"fg", build_in_fg}
-     * };
-     */
     return bi;
 }
 
 
-/*
- * cd :
- * ~ -> go to home (getenv("HOME"))
- *  -> go to home (//)
- * path -> go to path
- *
- * return 0
- */
-//exit : exit
+int find_built_in(char *name, built_ins_t *built_ins) {
+    char *built_in_name;
+
+    for (int i = 0; i < BUILT_IN_NUMBER; i++) {
+        built_in_name = built_ins->built_in[i].name;
+        if ((strlen(name) == strlen(built_in_name)) && (strcmp(name, built_in_name) == 0)) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+
+void free_built_ins(built_ins_t *bi) {
+    if (bi != NULL) {
+        if (bi->built_in != NULL) {
+            free(bi->built_in);
+        }
+        free(bi);
+    }
+}
+
+
 int build_in_cd(command_t *cmd) {
     int ret;
 
     if ((cmd->argv[1] == NULL) || (cmd->argv[1][0] == '~')) {
         ret = chdir(getenv("HOME"));
     } else {
-        ret = chdir(getenv("HOME"));
+        ret = chdir(cmd->argv[1]);
     }
     if (ret == -1) {
         printf("built_in.c:~35 OMG WTF BBQ");
     }
+    return 0;
+}
+
+
+int build_in_ex(command_t *cmd) {
+    exit(0);
+}
+
+
+int build_in_fg(command_t *cmd) {
+    NULL;
     return 0;
 }
