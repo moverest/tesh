@@ -49,11 +49,15 @@ void free_built_ins(built_ins_t *bi) {
 
 
 int build_in_cd(command_t *cmd) {
-    int ret;
+    int  ret;
+    char *path = cmd->argv[1];
 
-    if ((cmd->argv[1] == NULL) || (cmd->argv[1][0] == '~')) {
+    if ((path == NULL) || (path[0] == '~')) {
         ret = chdir(getenv("HOME"));
     } else {
+        if ((strlen(path) > 2) && (path[strlen(path) - 1] == '/')) {
+            path[strlen(path) - 1] = '\0';
+        }
         ret = chdir(cmd->argv[1]);
     }
     if (ret == -1) {
