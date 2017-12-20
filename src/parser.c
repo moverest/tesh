@@ -20,10 +20,15 @@
 
 void free_command(command_t *cmd) {
     for (size_t i = 0; cmd->argv[i] != NULL; i++) {
+        //printf("freeing %s @ id = %ld\n", cmd->argv[i], i);
         free(cmd->argv[i]);
     }
-    free(cmd->argv);
-    free(cmd);
+    if (cmd->argv != NULL) {
+        free(cmd->argv);
+    }
+    if (cmd != NULL) {
+        free(cmd);
+    }
 }
 
 
@@ -38,7 +43,9 @@ void free_statement(statement_t *st) {
     if (st->redirect_out_file != NULL) {
         free(st->redirect_out_file);
     }
-    free(st);
+    if (st != NULL) {
+        free(st);
+    }
 }
 
 
@@ -46,7 +53,9 @@ void free_compound(compound_statement_t *cp) {
     for (size_t i = 0; i < cp->num_statements; i++) {
         free_statement(cp->statements[i]);
     }
-    free(cp);
+    if (cp != NULL) {
+        free(cp);
+    }
 }
 
 
@@ -400,6 +409,11 @@ int exec_compound(compound_statement_t *cstatement, bool exit_on_failure) {
         }
 
         last_status_code = WEXITSTATUS(status);
+
+        if (exit_on_failure && (last_status_code != 0)) {
+            exit(0);
+        }
+
         go_on_condition_t go_on = cstatement->statements[i]->go_on_condition;
 
         if ((last_status_code != 0) && (go_on == GO_ON_IF_SUCCESS)) {

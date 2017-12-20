@@ -63,7 +63,7 @@ int build_in_cd(command_t *cmd) {
         ret = chdir(cmd->argv[1]);
     }
     if (ret == -1) {
-        printf("built_in.c:~35 OMG WTF BBQ");
+        printf("cd: The directory \"%s\" does not exist\n", cmd->argv[1]);
     }
     return 0;
 }
