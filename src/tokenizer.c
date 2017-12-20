@@ -120,9 +120,9 @@ token_t *tokenizer_next(tokenizer_t *tokenizer) {
             token = new_token(TOKEN_STRING, tokenizer->buf + tokenizer->pos, incr);
         }
 
-        /*if(strchr(token->str, '\\')){
-         * token->str=unescape_token_buffer(token->str);
-         * }*/
+        if (strchr(token->str, '\\')) {
+            token->str = unescape_token_buffer(token->str);
+        }
     }
 
     tokenizer->pos += incr;
@@ -196,7 +196,7 @@ int find_substring_index(const char *string, const char *substring) {
 
 
 char *unescape_token_buffer(char *buf) {
-    char list[]   = { '&', '|', '<', '>', ';' };
+    char list[]   = { '&', '|', '<', '>', ';', '"' };
     char *escaped = (char *)malloc(sizeof(char *) * 3);
     int  idToDel;
 
@@ -204,8 +204,8 @@ char *unescape_token_buffer(char *buf) {
     escaped[2] = '\0';
     for (size_t i = 0; i < ARRAY_LEN(list); i++) {
         escaped[1] = list[i];
-        while ((idToDel = find_substring_index(buf, escaped)) != 1) {
-            buf = remove_char(buf, idToDel);
+        while ((idToDel = find_substring_index(buf, escaped)) != -1) {
+            remove_char(buf, idToDel);
         }
     }
     // We are good for everything except //
