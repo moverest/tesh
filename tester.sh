@@ -23,4 +23,3 @@ echo -e "\x1b[31m$num_failures failed.\x1b[0m"
 rm tmp*
 
 [ $num_failures == 0 ]
-
