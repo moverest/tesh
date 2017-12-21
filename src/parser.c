@@ -305,6 +305,7 @@ int exec_statement(statement_t *statement, int *status, bool bg_mod) {
             int (*func)(command_t *cmd) = *(bi->built_in[id_built_in].func);
             free_built_ins(bi);
             func(cmd_i);
+            pids[i] = -1;
         } else {
             free_built_ins(bi);
             *pd_in = *pd_out;
