@@ -400,13 +400,16 @@ int exec_compound(compound_statement_t *cstatement, bool exit_on_failure) {
         }
 
         last_status_code = WEXITSTATUS(status);
-        if (exit_on_failure && (last_status_code != 0)) {
-            exit(0);
-        }
-        bool go_on = cstatement->statements[i]->go_on_condition;
-        if (!(((go_on == GO_ON_IF_SUCCESS) && (last_status_code == 0)) ||
-              ((go_on == GO_ON_IF_FAILURE) && (last_status_code != 0)))) {
-            i++;
+        go_on_condition_t go_on = cstatement->statements[i]->go_on_condition;
+
+        if ((last_status_code != 0) && (go_on == GO_ON_IF_SUCCESS)) {
+            while (i < cstatement->num_statements && cstatement->statements[i]->go_on_condition == GO_ON_IF_SUCCESS) {
+                i++;
+            }
+        } else if ((last_status_code == 0) && (go_on == GO_ON_IF_FAILURE)) {
+            while (i < cstatement->num_statements && cstatement->statements[i]->go_on_condition == GO_ON_IF_FAILURE) {
+                i++;
+            }
         }
     }
 
