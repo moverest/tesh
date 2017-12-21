@@ -280,9 +280,17 @@ statement_t *new_statement() {
 
 
 int exec_statement(statement_t *statement, int *status) {
+    if (statement->num_commands <= 0) {
+        return 0;
+    }
+
+    int builtinId = find_builtin(statement->cmds[0]->argv[0]);
+    if (builtinId != NOT_A_BUILTIN) {
+        *status = builtins[builtinId].func(statement->cmds[0]);
+        return 0;
+    }
+
     int pd_in[2], pd_out[2];
-
-
 
     pid_t *pids = (pid_t *)malloc(sizeof(pid_t) * statement->num_commands);
 
@@ -294,89 +302,76 @@ int exec_statement(statement_t *statement, int *status) {
 #define IS_LAST_CMD(i)     (i + 1 == statement->num_commands)
 
     for (size_t i = 0; i < statement->num_commands; i++) {
-        // Insert here test for built in
-        built_ins_t *bi = get_built_ins();
-        int         id_built_in;
-        command_t   *cmd_i = statement->cmds[i];
-        if ((id_built_in = find_built_in(cmd_i->argv[0], bi)) != -1) {
-            int (*func)(command_t *cmd) = *(bi->built_in[id_built_in].func);
-            free_built_ins(bi);
-            func(cmd_i);
-            pids[i] = -1;
-        } else {
-            free_built_ins(bi);
-            *pd_in = *pd_out;
+        command_t *cmd_i = statement->cmds[i];
+        *pd_in = *pd_out;
+        if (!IS_LAST_CMD(i)) {
+            pipe(pd_out);
+        }
+
+        pid_t child_pid = fork();
+        if (child_pid == 0) {
             if (!IS_LAST_CMD(i)) {
-                pipe(pd_out);
-            }
-
-            pid_t child_pid = fork();
-            if (child_pid == 0) {
-                if (!IS_LAST_CMD(i)) {
-                    dup2(pd_out[1], 1);
-                    close(pd_out[0]);
-                    close(pd_out[1]);
-                } else {
-                    if (statement->redirect_out_file != NULL) {
-                        int fd_out;
-                        if (statement->redirect_append) {
-                            fd_out = open(statement->redirect_out_file,
-                                          O_WRONLY | O_CREAT | O_APPEND, 0644);
-                        } else {
-                            fd_out = open(statement->redirect_out_file,
-                                          O_WRONLY | O_CREAT | O_TRUNC, 0644);
-                        }
-                        if (fd_out == -1) {
-                            perror("Error opening redirect out file ");
-                            return 1;
-                        }
-
-                        dup2(fd_out, 1);
-                        close(fd_out);
-                    }
-                }
-
-                if (!IS_FIRST_CMD(i)) {
-                    dup2(pd_in[0], 0);
-                    close(pd_in[0]);
-                } else {
-                    if (statement->redirect_in_file != NULL) {
-                        int fd_in = open(statement->redirect_in_file, O_RDONLY);
-
-                        if (fd_in == -1) {
-                            perror("Error opening redirect in file ");
-                            return 1;
-                        }
-
-                        dup2(fd_in, 0);
-                        close(fd_in);
-                    }
-                }
-                int err = execvp(cmd_i->argv[0], cmd_i->argv);
-                if (err) {
-                    int error_num = errno;
-                    error(1, error_num, "error while starting '%s'",
-                          cmd_i->argv[0]);
-                }
-                exit(2);
-            }
-
-            if (!IS_LAST_CMD(i)) {
+                dup2(pd_out[1], 1);
+                close(pd_out[0]);
                 close(pd_out[1]);
+            } else {
+                if (statement->redirect_out_file != NULL) {
+                    int fd_out;
+                    if (statement->redirect_append) {
+                        fd_out = open(statement->redirect_out_file,
+                                      O_WRONLY | O_CREAT | O_APPEND, 0644);
+                    } else {
+                        fd_out = open(statement->redirect_out_file,
+                                      O_WRONLY | O_CREAT | O_TRUNC, 0644);
+                    }
+                    if (fd_out == -1) {
+                        perror("Error opening redirect out file ");
+                        return 1;
+                    }
+
+                    dup2(fd_out, 1);
+                    close(fd_out);
+                }
             }
 
             if (!IS_FIRST_CMD(i)) {
+                dup2(pd_in[0], 0);
                 close(pd_in[0]);
-            }
+            } else {
+                if (statement->redirect_in_file != NULL) {
+                    int fd_in = open(statement->redirect_in_file, O_RDONLY);
 
-            pids[i] = child_pid;
+                    if (fd_in == -1) {
+                        perror("Error opening redirect in file ");
+                        return 1;
+                    }
+
+                    dup2(fd_in, 0);
+                    close(fd_in);
+                }
+            }
+            int err = execvp(cmd_i->argv[0], cmd_i->argv);
+            if (err) {
+                int error_num = errno;
+                error(1, error_num, "error while starting '%s'",
+                      cmd_i->argv[0]);
+            }
+            exit(2);
         }
+
+        if (!IS_LAST_CMD(i)) {
+            close(pd_out[1]);
+        }
+
+        if (!IS_FIRST_CMD(i)) {
+            close(pd_in[0]);
+        }
+
+        pids[i] = child_pid;
     }
 
     for (size_t i = 0; i < statement->num_commands; i++) {
-        if (pids[i] != -1) {
             waitpid(pids[i], status, 0);
-        }
     }
 
     return 0;

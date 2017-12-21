@@ -1,54 +1,25 @@
 #include <stdio.h>
 #include <string.h>
 #include "built_in.h"
-
-#define BUILT_IN_NUMBER    3
-
-built_ins_t *get_built_ins() {
-    built_in_t *built_ins = (built_in_t *)malloc(sizeof(built_in_t) * BUILT_IN_NUMBER);
-
-    built_ins[0] = (built_in_t){
-        "cd", &build_in_cd
-    };
-    built_ins[1] = (built_in_t){
-        "fg", &build_in_fg
-    };
-    built_ins[2] = (built_in_t){
-        "exit", &build_in_ex
-    };
+#include "tools.h"
 
 
-    built_ins_t *bi = (built_ins_t *)malloc(sizeof(built_ins_t));
-    bi->built_in = built_ins;
+int find_builtin(char *name) {
+    if (name == NULL) {
+        return NOT_A_BUILTIN;
+    }
 
-    return bi;
-}
-
-
-int find_built_in(char *name, built_ins_t *built_ins) {
-    char *built_in_name;
-
-    for (int i = 0; i < BUILT_IN_NUMBER; i++) {
-        built_in_name = built_ins->built_in[i].name;
-        if ((strlen(name) == strlen(built_in_name)) && (strcmp(name, built_in_name) == 0)) {
+    for (size_t i = 0; i < num_builtins; i++) {
+        if (strcmp(name, builtins[i].name) == 0) {
             return i;
         }
     }
-    return -1;
+
+    return NOT_A_BUILTIN;
 }
 
 
-void free_built_ins(built_ins_t *bi) {
-    if (bi != NULL) {
-        if (bi->built_in != NULL) {
-            free(bi->built_in);
-        }
-        free(bi);
-    }
-}
-
-
-int build_in_cd(command_t *cmd) {
+int builtin_cd(command_t *cmd) {
     int  ret;
     char *path = cmd->argv[1];
 
@@ -56,6 +27,7 @@ int build_in_cd(command_t *cmd) {
         ret = chdir(getenv("HOME"));
     } else {
         if ((strlen(path) > 2) && (path[strlen(path) - 1] == '/')) {
+            // FIX ME: We should not be editing arguments.
             path[strlen(path) - 1] = '\0';
         }
         ret = chdir(cmd->argv[1]);
@@ -67,12 +39,20 @@ int build_in_cd(command_t *cmd) {
 }
 
 
-int build_in_ex(command_t *cmd) {
+int builtin_exit(command_t *cmd) {
     exit(0);
 }
 
 
-int build_in_fg(command_t *cmd) {
-    NULL;
+int builtin_fg(command_t *cmd) {
     return 0;
 }
+
+
+builtin_t builtins[] = {
+    { "cd",   builtin_cd   },
+    { "exit", builtin_exit },
+    { "fg",   builtin_fg   }
+};
+
+size_t num_builtins = ARRAY_LEN(builtins);

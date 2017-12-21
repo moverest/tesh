@@ -3,24 +3,23 @@
 
 #include "parser.h"
 
-
 typedef struct {
     char *name;
     int (*func)(command_t *cmd);
-} built_in_t;
+} builtin_t;
 
-typedef struct {
-    built_in_t *built_in;
-} built_ins_t;
+// `builtins` is the builtins vector. To find if a given command is a builtin
+// use the `find_builtin` function.
+// To lauch a given builtin, use `builtins[i].func(argv)` where `i` is the index
+// returned by `find_builtin` and `argv` the arguments.
+extern builtin_t builtins[];
+extern size_t    num_builtins;
 
-extern built_ins_t built_ins;
+#define NOT_A_BUILTIN    -1
 
-int build_in_cd(command_t *cmd);
-int build_in_fg(command_t *cmd);
-int build_in_ex(command_t *cmd);
-
-int find_built_in(char *name, built_ins_t *built_ins);
-built_ins_t *get_built_ins();
-void free_built_ins(built_ins_t *bi);
+// `find_builtin` tries to find out if the given command name is a built in or
+// not. If it is, it returns its position in the builtins vector. Otherwise it
+// returns NOT_A_BUILTIN.
+int find_builtin(char *name);
 
 #endif
