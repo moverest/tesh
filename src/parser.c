@@ -20,10 +20,15 @@
 
 void free_command(command_t *cmd) {
     for (size_t i = 0; cmd->argv[i] != NULL; i++) {
+        //printf("freeing '%s' @ id = %ld\n", cmd->argv[i], i);
         free(cmd->argv[i]);
     }
-    free(cmd->argv);
-    free(cmd);
+    if (cmd->argv != NULL) {
+        free(cmd->argv);
+    }
+    if (cmd != NULL) {
+        free(cmd);
+    }
 }
 
 
@@ -38,7 +43,9 @@ void free_statement(statement_t *st) {
     if (st->redirect_out_file != NULL) {
         free(st->redirect_out_file);
     }
-    free(st);
+    if (st != NULL) {
+        free(st);
+    }
 }
 
 
@@ -46,7 +53,9 @@ void free_compound(compound_statement_t *cp) {
     for (size_t i = 0; i < cp->num_statements; i++) {
         free_statement(cp->statements[i]);
     }
-    free(cp);
+    if (cp != NULL) {
+        free(cp);
+    }
 }
 
 
@@ -95,6 +104,9 @@ parser_t *new_parser(char *s) {
 
     parser->tokenizer     = new_tokenizer(s);
     parser->current_token = tokenizer_next(parser->tokenizer);
+    if (parser->current_token == NULL) {
+        return NULL;
+    }
 
     return parser;
 }
@@ -120,6 +132,7 @@ command_t *parser_cmd(parser_t *parser) {
     vector_t *argv = make_vector(sizeof(char *));
 
     if (parser->current_token->type != TOKEN_STRING) {
+        printf("type : %d\n", parser->current_token->type);
         perror("Error while parsing a cmd. First token's type is not string.");
         return NULL;
     }
@@ -128,6 +141,9 @@ command_t *parser_cmd(parser_t *parser) {
         char *str = token_extract(parser->current_token);
         vector_append(argv, &str);
         parser->current_token = tokenizer_next(parser->tokenizer);
+        if (parser->current_token == NULL) {
+            return NULL;
+        }
     }
 
     command_t *cmd = (command_t *)malloc(sizeof(command_t));
@@ -159,12 +175,18 @@ statement_t *parser_statement(parser_t *p) {
         }
         current_statement->redirect_in_file = token_extract(p->current_token);
         p->current_token = tokenizer_next(p->tokenizer);
+        if (p->current_token == NULL) {
+            return NULL;
+        }
     }
 
     while (p->current_token->type == TOKEN_PIPE) {
         token_free(p->current_token);
         p->current_token = tokenizer_next(p->tokenizer);
-        current_command  = parser_cmd(p);
+        if (p->current_token == NULL) {
+            return NULL;
+        }
+        current_command = parser_cmd(p);
         if (current_command == NULL) {
             perror("There was an error while computing commande");
             return NULL;
@@ -178,12 +200,18 @@ statement_t *parser_statement(parser_t *p) {
         current_statement->redirect_append = append;
         token_free(p->current_token);
         p->current_token = tokenizer_next(p->tokenizer);
+        if (p->current_token == NULL) {
+            return NULL;
+        }
         if (p->current_token->type != TOKEN_STRING) {
             perror("Error while parsing a redirection. First next token's type is not string.");
             return NULL;
         }
         current_statement->redirect_out_file = token_extract(p->current_token);
         p->current_token = tokenizer_next(p->tokenizer);
+        if (p->current_token == NULL) {
+            return NULL;
+        }
     }
 
     // After a list of commands, there is a &&, || or ;
@@ -191,11 +219,17 @@ statement_t *parser_statement(parser_t *p) {
     case TOKEN_AND:
         current_statement->go_on_condition = GO_ON_IF_SUCCESS;
         p->current_token = tokenizer_next(p->tokenizer);
+        if (p->current_token == NULL) {
+            return NULL;
+        }
         break;
 
     case TOKEN_OR:
         current_statement->go_on_condition = GO_ON_IF_FAILURE;
         p->current_token = tokenizer_next(p->tokenizer);
+        if (p->current_token == NULL) {
+            return NULL;
+        }
         break;
 
     default:
@@ -214,6 +248,9 @@ compound_statement_t *parser_compound(parser_t *p) {
     while (p->current_token->type == TOKEN_END) {
         token_free(p->current_token);
         p->current_token = tokenizer_next(p->tokenizer);
+        if (p->current_token == NULL) {
+            return NULL;
+        }
     }
 
     if (p->current_token->type == TOKEN_EOF) {
@@ -246,6 +283,8 @@ compound_statement_t *parser_compound(parser_t *p) {
 
     if (p->current_token->type == TOKEN_BG) {
         current_compound->bg = true;
+        token_free(p->current_token);
+        p->current_token = tokenizer_next(p->tokenizer);
     }
 
     current_compound->num_statements = statements->size;
@@ -279,7 +318,7 @@ statement_t *new_statement() {
 }
 
 
-int exec_statement(statement_t *statement, int *status) {
+int exec_statement(statement_t *statement, int *status, bool bg_mod) {
     if (statement->num_commands <= 0) {
         return 0;
     }
@@ -369,30 +408,44 @@ int exec_statement(statement_t *statement, int *status) {
 
         pids[i] = child_pid;
     }
-
-    for (size_t i = 0; i < statement->num_commands; i++) {
+    if (bg_mod) {
+        printf("[%d]\n", pids[(statement->num_commands) - 1]);
+    } else {
+        for (size_t i = 0; i < statement->num_commands; i++) {
             waitpid(pids[i], status, 0);
+        }
     }
 
     return 0;
 }
 
 
-int exec_compound(compound_statement_t *cstatement) {
+int exec_compound(compound_statement_t *cstatement, bool exit_on_failure) {
     int last_status_code = 0;
 
     for (size_t i = 0; i < cstatement->num_statements; i++) {
         int status;
-        int err = exec_statement(cstatement->statements[i], &status);
+        int err = exec_statement(cstatement->statements[i], &status, cstatement->bg);
         if (err) {
             return err + 100;
         }
 
         last_status_code = WEXITSTATUS(status);
-        bool go_on = cstatement->statements[i]->go_on_condition;
-        if (!(((go_on == GO_ON_IF_SUCCESS) && (last_status_code == 0)) ||
-              ((go_on == GO_ON_IF_FAILURE) && (last_status_code != 0)))) {
-            i++;
+
+        if (exit_on_failure && (last_status_code != 0)) {
+            exit(0);
+        }
+
+        go_on_condition_t go_on = cstatement->statements[i]->go_on_condition;
+
+        if ((last_status_code != 0) && (go_on == GO_ON_IF_SUCCESS)) {
+            while (i < cstatement->num_statements && cstatement->statements[i]->go_on_condition == GO_ON_IF_SUCCESS) {
+                i++;
+            }
+        } else if ((last_status_code == 0) && (go_on == GO_ON_IF_FAILURE)) {
+            while (i < cstatement->num_statements && cstatement->statements[i]->go_on_condition == GO_ON_IF_FAILURE) {
+                i++;
+            }
         }
     }
 

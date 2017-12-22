@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <string.h>
+#include <sys/wait.h>
+#include <sys/types.h>
 #include "built_in.h"
 #include "tools.h"
 
@@ -33,7 +35,7 @@ int builtin_cd(command_t *cmd) {
         ret = chdir(cmd->argv[1]);
     }
     if (ret == -1) {
-        printf("built_in.c:~35 OMG WTF BBQ");
+        printf("cd: The directory \"%s\" does not exist\n", cmd->argv[1]);
     }
     return 0;
 }
@@ -45,6 +47,21 @@ int builtin_exit(command_t *cmd) {
 
 
 int builtin_fg(command_t *cmd) {
+    int   status;
+    pid_t pid_to_wait;
+
+    if (cmd->argv[1] == NULL) {
+        pid_to_wait = wait(&status);
+    } else {
+        pid_to_wait = (pid_t)atoi(cmd->argv[1]);
+        pid_to_wait = waitpid(pid_to_wait, &status, 0);
+    }
+    if (pid_to_wait == -1) {
+        perror("wait failed");
+        return -1;
+    }
+    int exit_status = WEXITSTATUS(status);
+    printf("[%d->%d]\n", pid_to_wait, exit_status);
     return 0;
 }
 
