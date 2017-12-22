@@ -420,7 +420,7 @@ int exec_statement(statement_t *statement, int *status, bool bg_mod) {
 }
 
 
-int exec_compound(compound_statement_t *cstatement, bool exit_on_failure) {
+int exec_compound(compound_statement_t *cstatement) {
     int last_status_code = 0;
 
     for (size_t i = 0; i < cstatement->num_statements; i++) {
@@ -431,10 +431,6 @@ int exec_compound(compound_statement_t *cstatement, bool exit_on_failure) {
         }
 
         last_status_code = WEXITSTATUS(status);
-
-        if (exit_on_failure && (last_status_code != 0)) {
-            exit(0);
-        }
 
         go_on_condition_t go_on = cstatement->statements[i]->go_on_condition;
 
@@ -449,5 +445,5 @@ int exec_compound(compound_statement_t *cstatement, bool exit_on_failure) {
         }
     }
 
-    return 0;
+    return last_status_code;
 }

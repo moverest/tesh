@@ -59,7 +59,7 @@ void print_compound(compound_statement_t *cp);
 // Returns 0 on success. Anything else is an error.
 int exec_statement(statement_t *statement, int *status, bool bg_mod);
 
-int exec_compound(compound_statement_t *cp, bool exit_on_failure);
+int exec_compound(compound_statement_t *cp);
 void free_compound(compound_statement_t *cp);
 
 
