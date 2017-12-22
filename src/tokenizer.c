@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "tools.h"
+
 
 tokenizer_t *new_tokenizer(char *buf) {
     tokenizer_t *tokenizer = (tokenizer_t *)malloc(sizeof(tokenizer_t));
@@ -83,12 +85,44 @@ token_t *tokenizer_next(tokenizer_t *tokenizer) {
         break;
 
     default:
-        while (tokenizer->buf[tokenizer->pos + incr] != ' ' &&
-               tokenizer->buf[tokenizer->pos + incr] != '\0' &&
-               tokenizer->buf[tokenizer->pos + incr] != '\n') {
+        if (tokenizer->buf[tokenizer->pos] == '\"') {
             incr++;
+            while (tokenizer->buf[tokenizer->pos + incr] != '\"' ||
+                   (
+                       tokenizer->buf[tokenizer->pos + incr] == '\"' &&
+                       tokenizer->buf[tokenizer->pos + incr - 1] == '\\'
+                   )) {
+                //printf("l93 : %c\n", tokenizer->buf[tokenizer->pos + incr]);
+                incr++;
+                if ((tokenizer->pos + incr) == (strlen(tokenizer->buf) + 2)) {
+                    perror("Unbalanced \" encontred. Please verify your input");
+                    return NULL;
+                }
+            }
+            token = new_token(TOKEN_STRING, tokenizer->buf + tokenizer->pos + 1, incr - 1);
+            //we take from pos+1 until incr-1 because we don't want echo "banana" to display "banana" but banana
+            incr++;
+        } else {
+            while (tokenizer->buf[tokenizer->pos + incr] != ' ' &&
+                   tokenizer->buf[tokenizer->pos + incr] != '\0' &&
+                   tokenizer->buf[tokenizer->pos + incr] != '\n') {
+                if ((tokenizer->pos + incr > 0) && (tokenizer->buf[tokenizer->pos + incr - 1] != '\\') && (
+                        (tokenizer->buf[tokenizer->pos + incr] == '<') ||
+                        (tokenizer->buf[tokenizer->pos + incr] == '>') ||
+                        (tokenizer->buf[tokenizer->pos + incr] == ';') ||
+                        (tokenizer->buf[tokenizer->pos + incr] == '|') ||
+                        (tokenizer->buf[tokenizer->pos + incr] == '&')
+                        )) {
+                    break;
+                }
+                incr++;
+            }
+            token = new_token(TOKEN_STRING, tokenizer->buf + tokenizer->pos, incr);
         }
-        token = new_token(TOKEN_STRING, tokenizer->buf + tokenizer->pos, incr);
+
+        if (strchr(token->str, '\\')) {
+            token->str = unescape_token_buffer(token->str);
+        }
     }
 
     tokenizer->pos += incr;
@@ -137,4 +171,43 @@ void token_free(token_t *token) {
         free(token->str);
     }
     free(token);
+}
+
+
+/*** Code from stack overflow ***/
+char *remove_char(char *word, int idToDel) {
+    return (char *)memmove(&word[idToDel], &word[idToDel + 1], strlen(word) - idToDel);
+}
+
+
+/*** Code from http://nicolasj.developpez.com/articles/libc/string/#LIII-B ***/
+int find_substring_index(const char *string, const char *substring) {
+    int index = -1;
+
+    if ((string != NULL) && (substring != NULL)) {
+        char *ptr_pos = NULL;
+        ptr_pos = (char *)strstr(string, substring);
+        if (ptr_pos != NULL) {
+            index = ptr_pos - string;
+        }
+    }
+    return index;
+}
+
+
+char *unescape_token_buffer(char *buf) {
+    char list[]   = { '&', '|', '<', '>', ';', '"' };
+    char *escaped = (char *)malloc(sizeof(char *) * 3);
+    int  idToDel;
+
+    escaped[0] = '\\';
+    escaped[2] = '\0';
+    for (size_t i = 0; i < ARRAY_LEN(list); i++) {
+        escaped[1] = list[i];
+        while ((idToDel = find_substring_index(buf, escaped)) != -1) {
+            remove_char(buf, idToDel);
+        }
+    }
+    // We are good for everything except //
+    return buf;
 }
